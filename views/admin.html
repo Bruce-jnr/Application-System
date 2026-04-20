@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{csrfToken}}" />
+    <title>Admin Dashboard - Voucher Management</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .voucher-card {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+        background: white;
+      }
+      .voucher-details {
+        font-family: monospace;
+        font-size: 1.2em;
+        margin: 10px 0;
+      }
+      .print-only {
+        display: none;
+      }
+      .logo {
+        max-width: 150px;
+        margin-bottom: 20px;
+      }
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printModal .modal-content,
+        #printModal .modal-content * {
+          visibility: visible;
+        }
+        #printModal .modal-content {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          border: none;
+          box-shadow: none;
+        }
+        #printModal .modal-header,
+        #printModal .modal-footer {
+          display: none;
+        }
+        #printModal .voucher-card {
+          border: 2px dashed #000;
+          page-break-inside: avoid;
+        }
+        .no-print {
+          display: none;
+        }
+      }
+      /* Modal Styles */
+      .modal-content {
+        border-radius: 15px;
+      }
+      .modal-header {
+        background-color: #f8f9fa;
+        border-radius: 15px 15px 0 0;
+      }
+      .btn-proceed {
+        background-color: #28a745;
+        color: white;
+      }
+      .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+      }
+      /* Add styles for header and logout button */
+      .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .logout-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .logout-btn:hover {
+        background-color: #c82333;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">NSACoE Admin</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/admin">Vouchers</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/settings">Settings</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <button
+                class="nav-link btn btn-link"
+                id="logoutBtn"
+                style="color: white"
+              >
+                Logout
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="admin-header">
+            <h2>Voucher Management</h2>
+          </div>
+
+          <!-- Voucher Statistics -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="card bg-primary text-white">
+                <div class="card-body">
+                  <h5 class="card-title">Total Vouchers</h5>
+                  <h2 class="card-text" id="totalVouchers">0</h2>
+                  <p class="card-text"><small>All time</small></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-success text-white">
+                <div class="card-body">
+                  <h5 class="card-title">Used Vouchers</h5>
+                  <h2 class="card-text" id="usedVouchers">0</h2>
+                  <p class="card-text"><small>Total used</small></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card bg-info text-white">
+                <div class="card-body">
+                  <h5 class="card-title">Available Vouchers</h5>
+                  <h2 class="card-text" id="unusedVouchers">0</h2>
+                  <p class="card-text"><small>Ready to use</small></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-body">
+              <button id="generateVoucher" class="btn btn-primary">
+                Generate New Voucher
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h4>Generated Vouchers</h4>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Serial Number</th>
+                      <th>Status</th>
+                      <th>Created By</th>
+                      <th>Created At</th>
+                      <th>Used At</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vouchersList"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="confirmModal"
+      tabindex="-1"
+      aria-labelledby="confirmModalLabel"
+      role="dialog"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">
+              Confirm Voucher Generation
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Are you sure you want to generate
+              <span id="voucherCountDisplay">1</span> voucher(s)?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="confirmGenerate">
+              Generate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Modal -->
+    <div
+      class="modal fade"
+      id="printModal"
+      tabindex="-1"
+      aria-labelledby="printModalLabel"
+      role="dialog"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="printModalLabel">Voucher Generated</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="voucher-card">
+              <img
+                src="/public/images/logo1.png"
+                alt="College Logo"
+                class="logo"
+              />
+              <h3>Admission Portal Voucher</h3>
+              <div class="voucher-details">
+                <p>Serial Number: <span id="modalSerial"></span></p>
+                <p>PIN: <span id="modalPin"></span></p>
+              </div>
+              <p class="text-muted">Valid for admission application</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary" id="printVoucher">
+              Print Voucher
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Helper function to get the correct API base URL
+      function getApiBaseUrl() {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+
+        // If we're on the main domain, try to use the app subdomain
+        if (hostname === 'nsacoe.edu.gh' || hostname === 'www.nsacoe.edu.gh') {
+          return `${protocol}//app.nsacoe.edu.gh`;
+        }
+
+        // Otherwise use current origin
+        return window.location.origin;
+      }
+
+      // Check admin session
+      async function checkAdminSession() {
+        try {
+          const apiUrl = getApiBaseUrl() + '/api/admin/check-session';
+          console.log('Checking session at:', apiUrl);
+
+          let response;
+          try {
+            response = await fetch(apiUrl, {
+              credentials: 'include',
+            });
+          } catch (fetchError) {
+            console.log(
+              'Cross-domain session check failed, trying same-domain:',
+              fetchError
+            );
+            // Fallback to same-domain API call
+            const fallbackUrl =
+              window.location.origin + '/api/admin/check-session';
+            console.log('Trying fallback session check URL:', fallbackUrl);
+            response = await fetch(fallbackUrl, {
+              credentials: 'include',
+            });
+          }
+
+          console.log('Session check response status:', response.status);
+
+          if (!response.ok) {
+            console.log('Session check failed, redirecting to login');
+            window.location.href = '/admin-login';
+            return false;
+          }
+
+          const data = await response.json();
+          console.log('Session check data:', data);
+
+          if (!data.isAdmin) {
+            console.log('Not admin, redirecting to login');
+            window.location.href = '/admin-login';
+            return false;
+          }
+
+          console.log('Session check passed');
+          return true;
+        } catch (error) {
+          console.error('Session check failed:', error);
+          window.location.href = '/admin-login';
+          return false;
+        }
+      }
+
+      // Initialize Bootstrap modal
+      const confirmModal = new bootstrap.Modal(
+        document.getElementById('confirmModal')
+      );
+      const confirmGenerateBtn = document.getElementById('confirmGenerate');
+
+      // Store vouchers in localStorage
+      function storeVouchers(vouchers) {
+        localStorage.setItem('adminVouchers', JSON.stringify(vouchers));
+      }
+
+      // Get vouchers from localStorage
+      function getStoredVouchers() {
+        const vouchers = localStorage.getItem('adminVouchers');
+        return vouchers ? JSON.parse(vouchers) : [];
+      }
+
+      // Generate new voucher
+      async function generateVoucher() {
+        // Show confirmation modal first
+        confirmModal.show();
+      }
+
+      // Handle confirmation and generate voucher
+      async function handleConfirmGenerate() {
+        try {
+          // Hide the confirmation modal
+          confirmModal.hide();
+
+          const response = await fetch(
+            getApiBaseUrl() + '/api/admin/generate-voucher',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include', // Add this to include session cookies
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Update modal voucher display with the voucher data
+            document.getElementById('modalSerial').textContent =
+              data.voucher.serial_number;
+            document.getElementById('modalPin').textContent = data.voucher.pin;
+
+            // Show the print modal
+            const printModal = new bootstrap.Modal(
+              document.getElementById('printModal')
+            );
+            printModal.show();
+
+            // Refresh both the vouchers list and statistics
+            await loadVouchers();
+            await loadVoucherStats();
+          } else {
+            alert('Error: ' + (data.message || 'Failed to generate voucher'));
+          }
+        } catch (error) {
+          console.error('Error generating voucher:', error);
+          alert('Error generating voucher. Please try again.');
+        }
+      }
+
+      // Print voucher function
+      function printVoucher() {
+        window.print();
+      }
+
+      // Load vouchers list
+      async function loadVouchers() {
+        try {
+          const response = await fetch(
+            getApiBaseUrl() + '/api/admin/vouchers',
+            {
+              credentials: 'include',
+            }
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            // Store vouchers in localStorage
+            storeVouchers(data.vouchers);
+
+            // Update the table
+            updateVouchersTable(data.vouchers);
+          }
+        } catch (error) {
+          console.error('Error loading vouchers:', error);
+          // If API call fails, try to load from localStorage
+          const storedVouchers = getStoredVouchers();
+          if (storedVouchers.length > 0) {
+            updateVouchersTable(storedVouchers);
+          }
+        }
+      }
+
+      // Load voucher statistics
+      async function loadVoucherStats() {
+        try {
+          const response = await fetch(
+            getApiBaseUrl() + '/api/admin/vouchers/statistics',
+            {
+              credentials: 'include',
+            }
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            const stats = data.statistics;
+            console.log('Voucher statistics:', stats); // Debug log
+
+            // Get DOM elements
+            const totalVouchersElement =
+              document.getElementById('totalVouchers');
+            const usedVouchersElement = document.getElementById('usedVouchers');
+            const unusedVouchersElement =
+              document.getElementById('unusedVouchers');
+
+            // Update DOM with statistics if elements exist
+            if (totalVouchersElement) {
+              totalVouchersElement.textContent = stats.total_vouchers || 0;
+            }
+            if (usedVouchersElement) {
+              usedVouchersElement.textContent = stats.used_vouchers || 0;
+            }
+            if (unusedVouchersElement) {
+              unusedVouchersElement.textContent = stats.unused_vouchers || 0;
+            }
+
+            // Log the values being set
+            console.log('Setting statistics:', {
+              total: stats.total_vouchers,
+              used: stats.used_vouchers,
+              unused: stats.unused_vouchers,
+            });
+          } else {
+            console.error('Failed to load voucher statistics:', data.message);
+          }
+        } catch (error) {
+          console.error('Error loading voucher statistics:', error);
+        }
+      }
+
+      // Update vouchers table
+      function updateVouchersTable(vouchers) {
+        const tbody = document.getElementById('vouchersList');
+        tbody.innerHTML = vouchers
+          .map(
+            (voucher) => `
+                <tr>
+                    <td>${voucher.serial_number}</td>
+                    <td>${voucher.is_used ? 'Used' : 'Available'}</td>
+                    <td>${voucher.created_by}</td>
+                    <td>${new Date(voucher.created_at).toLocaleString()}</td>
+                    <td>${
+                      voucher.used_at
+                        ? new Date(voucher.used_at).toLocaleString()
+                        : '-'
+                    }</td>
+                </tr>
+            `
+          )
+          .join('');
+      }
+
+      // Event listeners
+      document
+        .getElementById('generateVoucher')
+        .addEventListener('click', generateVoucher);
+      document
+        .getElementById('confirmGenerate')
+        .addEventListener('click', handleConfirmGenerate);
+      document
+        .getElementById('printVoucher')
+        .addEventListener('click', printVoucher);
+
+      // Initial load
+      checkAdminSession();
+      loadVouchers();
+      loadVoucherStats();
+
+
+
+
+      // Add logout functionality
+      async function handleLogout() {
+        try {
+          const response = await fetch(getApiBaseUrl() + '/api/admin/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            // Clear any stored data
+            localStorage.removeItem('adminVouchers');
+            // Redirect to login page
+            window.location.href = '/admin-login';
+          } else {
+            alert('Logout failed. Please try again.');
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          alert('Error during logout. Please try again.');
+        }
+      }
+
+      // Add logout button event listeners
+      document.querySelectorAll('#logoutBtn').forEach((btn) => {
+        btn.addEventListener('click', handleLogout);
+      });
+    </script>
+  </body>
+</html>

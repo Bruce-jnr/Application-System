@@ -1,0 +1,23 @@
+{
+    "name": "Nsawkaw College of Education",
+    "short_name": "NSACoE",
+    "description": "Official website of Nsawkaw College of Education",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#161b7f",
+    "theme_color": "#161b7f",
+    "icons": [
+        {
+            "src": "/public/images/logo1.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/public/images/logo1.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+} 

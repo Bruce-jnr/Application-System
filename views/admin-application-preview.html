@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Preview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/public/css/admin-dashboard.css">
+    <style>
+        .preview-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .info-item {
+            margin-bottom: 1rem;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 0.25rem;
+        }
+        .info-value {
+            color: #2c3e50;
+        }
+        .document-preview {
+            max-width: 200px;
+            margin: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        .document-preview img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .back-button {
+            margin-bottom: 1rem;
+        }
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        .preview-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .preview-logo {
+            max-width: 100px;
+            margin-bottom: 1rem;
+        }
+        .application-status {
+            margin-top: 1rem;
+        }
+        .submission-date {
+            color: #7f8c8d;
+            margin-top: 0.5rem;
+        }
+        .table-responsive {
+            margin-top: 1rem;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <button id="backButton" class="btn btn-outline-primary back-button">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+
+            <div id="applicationDetails">
+                <!-- Application details will be loaded here -->
+        </div>
+
+            <div id="academicRecords">
+                <!-- Academic records will be loaded here -->
+        </div>
+
+        <div id="documents">
+                <!-- Documents will be loaded here -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Get application ID from URL
+        const applicationId = window.location.pathname.split('/').pop();
+
+        // Add event listener for back button
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = '/admin/dashboard';
+        });
+
+        // Function to format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        // Function to create info item
+        function createInfoItem(label, value) {
+            return `
+                <div class="info-item">
+                    <div class="info-label">${label}</div>
+                    <div class="info-value">${value || 'N/A'}</div>
+                </div>
+            `;
+        }
+
+        // Function to update status badge
+        function updateStatusBadge(status) {
+            const badge = document.getElementById('statusBadge');
+            if (!badge) {
+                console.warn('Status badge element not found');
+                return;
+            }
+
+            let className = 'bg-secondary';
+            let text = 'Unknown';
+
+            switch(status?.toLowerCase()) {
+                case 'pending':
+                    className = 'bg-warning';
+                    text = 'Pending';
+                    break;
+                case 'approved':
+                    className = 'bg-success';
+                    text = 'Approved';
+                    break;
+                case 'rejected':
+                    className = 'bg-danger';
+                    text = 'Rejected';
+                    break;
+            }
+
+            badge.className = `status-badge ${className} text-white`;
+            badge.textContent = text;
+        }
+
+        // Function to load application details
+        async function loadApplicationDetails() {
+            try {
+                // Get application ID from URL path
+                const pathParts = window.location.pathname.split('/');
+                // The URL format is /admin/application-preview/:id
+                // So we need to get the last part of the URL
+                const id = pathParts[pathParts.length - 1];
+                
+                if (!id || id === 'application-preview') {
+                    throw new Error('Invalid application ID');
+                }
+
+                console.log('Loading application details for ID:', id);
+
+                const response = await fetch(`/api/admin/applications/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load application details');
+                }
+
+                const application = data.application;
+                if (!application) {
+                    throw new Error('No application data received');
+                }
+
+                // Update the page title
+                document.title = `Application Details - ${application.first_name} ${application.last_name}`;
+
+                // Update the application details in the HTML
+                document.getElementById('applicationDetails').innerHTML = `
+                    <div class="section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="section-title">Application Details</h2>
+                            <span id="statusBadge" class="status-badge"></span>
+                        </div>
+                    <div class="preview-header">
+                        <img src="/public/images/logo1.png" alt="NSACoE Logo" class="preview-logo">
+                        <h1>Nsawkaw College of Education</h1>
+                        <h2>Application Details</h2>
+                        <div class="application-status">
+                            <span class="badge bg-${application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'danger' : 'warning'}">${application.status}</span>
+                            <p class="submission-date">Submitted on: ${formatDate(application.created_at)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Section -->
+                    <div class="section">
+                        <h3 class="section-title">Personal Information</h3>
+                        <div class="info-grid">
+                                ${createInfoItem('Reference Number', application.reference_number)}
+                            ${createInfoItem('Title', application.title)}
+                            ${createInfoItem('Full Name', `${application.first_name} ${application.middle_name || ''} ${application.last_name}`)}
+                            ${createInfoItem('Date of Birth', formatDate(application.date_of_birth))}
+                            ${createInfoItem('Gender', application.gender)}
+                            ${createInfoItem('Place of Birth', application.place_of_birth)}
+                            ${createInfoItem('Region of Birth', application.birth_region)}
+                            ${createInfoItem('Nationality', application.nationality)}
+                            ${createInfoItem('Place of Residence', application.residence_address)}
+                            ${createInfoItem('Region of Residence', application.residence_region)}
+                            ${createInfoItem('Religion', application.religion)}
+                            ${createInfoItem('Ghanaian Languages', application.languages && application.languages.length > 0 ? application.languages.join(', ') : 'N/A')}
+                            ${createInfoItem('ID Type', application.id_type)}
+                            ${createInfoItem('ID Number', application.id_number)}
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="section">
+                        <h3 class="section-title">Contact Information</h3>
+                        <div class="info-grid">
+                            ${createInfoItem('Address', application.address)}
+                            ${createInfoItem('City', application.city)}
+                            ${createInfoItem('Region', application.region)}
+                            ${createInfoItem('District', application.district)}
+                            ${createInfoItem('Country', application.country)}
+                            ${createInfoItem('Phone Numbers', application.phone ? application.phone.join(', ') : 'N/A')}
+                            ${createInfoItem('GPS Address', application.gps_code)}
+                            ${createInfoItem('Email', application.email)}
+                        </div>
+                    </div>
+
+                    <!-- Parent/Guardian Information Section -->
+                    <div class="section">
+                        <h3 class="section-title">Parent/Guardian Information</h3>
+                        <div class="info-grid">
+                                ${application.parent1 ? `
+                            <div class="info-item">
+                                <h4>Parent/Guardian 1</h4>
+                                        ${createInfoItem('Name', application.parent1.name)}
+                                        ${createInfoItem('Relationship', application.parent1.relationship)}
+                                        ${createInfoItem('Occupation', application.parent1.occupation)}
+                                        ${createInfoItem('Phone', application.parent1.phone)}
+                                        ${createInfoItem('Email', application.parent1.email)}
+                            </div>
+                                ` : ''}
+                                ${application.parent2 ? `
+                                <div class="info-item">
+                                    <h4>Parent/Guardian 2</h4>
+                                        ${createInfoItem('Name', application.parent2.name)}
+                                        ${createInfoItem('Relationship', application.parent2.relationship)}
+                                        ${createInfoItem('Occupation', application.parent2.occupation)}
+                                        ${createInfoItem('Phone', application.parent2.phone)}
+                                        ${createInfoItem('Email', application.parent2.email)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Section -->
+                    <div class="section">
+                        <h3 class="section-title">Emergency Contact</h3>
+                        <div class="info-grid">
+                                ${application.emergency_contact ? `
+                                    ${createInfoItem('Name', application.emergency_contact.name)}
+                                    ${createInfoItem('Phone', application.emergency_contact.phone)}
+                                    ${createInfoItem('Relationship', application.emergency_contact.relationship)}
+                                ` : ''}
+                                ${createInfoItem('Disability Status', application.disability_status || 'No')}
+                            ${application.disability_status === 'yes' ? createInfoItem('Disability Type', application.disability_type) : ''}
+                        </div>
+                    </div>
+
+                    <!-- Additional Information Section -->
+                    <div class="section">
+                        <h3 class="section-title">Additional Information</h3>
+                        <div class="info-grid">
+                                ${createInfoItem('How did you hear about us?', application.how_heard || 'Not specified')}
+                                ${createInfoItem('Questions/Comments', application.questions || 'None')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Load academic records
+                if (application.core_subjects && application.elective_subjects) {
+                    document.getElementById('academicRecords').innerHTML = `
+                        <div class="section">
+                            <h3 class="section-title">Academic Records</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Core Subjects</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Subject</th>
+                                                <th>Index Number</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                ${application.core_subjects.length > 0 ? 
+                                                    application.core_subjects.map(subject => `
+                                                <tr>
+                                                    <td>${subject.subject_name || 'N/A'}</td>
+                                                    <td>${subject.index_number || 'N/A'}</td>
+                                                    <td>${subject.grade || 'N/A'}</td>
+                                                </tr>
+                                                    `).join('') : 
+                                                    '<tr><td colspan="3" class="text-center">No core subjects found</td></tr>'
+                                                }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Elective Subjects</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Subject</th>
+                                                <th>Index Number</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                ${application.elective_subjects.length > 0 ? 
+                                                    application.elective_subjects.map(subject => `
+                                                <tr>
+                                                    <td>${subject.subject_name || 'N/A'}</td>
+                                                    <td>${subject.index_number || 'N/A'}</td>
+                                                    <td>${subject.grade || 'N/A'}</td>
+                                                </tr>
+                                                    `).join('') : 
+                                                    '<tr><td colspan="3" class="text-center">No elective subjects found</td></tr>'
+                                                }
+                                        </tbody>
+                                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Load documents
+                if (application.documents) {
+                    const documentTypes = {
+                        photo: 'Photo',
+                        id_document: 'ID Document',
+                        certificate: 'Certificate'
+                    };
+
+                    const documentHtml = Object.entries(documentTypes)
+                        .map(([type, label]) => {
+                            const dataUrl = application.documents[type];
+                            if (!dataUrl) return '';
+
+                            // Generate a filename based on document type and timestamp
+                            const timestamp = new Date().getTime();
+                            const extension = dataUrl.split(';')[0].split('/')[1];
+                            const filename = `${type}_${timestamp}.${extension}`;
+
+                            return `
+                                <div class="col-md-6 mb-3">
+                                    <div class="document-preview">
+                                        <h4>${label}</h4>
+                                        ${type === 'photo' ? 
+                                            `<img src="${dataUrl}" alt="${label}" class="img-fluid">
+                                             <div class="document-actions mt-2">
+                                                <a href="${dataUrl}" download="${filename}" class="btn btn-sm btn-success me-2">
+                                                    <i class="bi bi-download"></i> Download
+                                                </a>
+                                                <a href="${dataUrl}" target="_blank" class="btn btn-sm btn-info">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                             </div>` :
+                                            `<div class="document-actions">
+                                                <a href="${dataUrl}" download="${filename}" class="btn btn-sm btn-success me-2">
+                                                    <i class="bi bi-download"></i> Download
+                                                </a>
+                                                <a href="${dataUrl}" target="_blank" class="btn btn-sm btn-info">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </div>`
+                                        }
+                                    </div>
+                                </div>
+                            `;
+                        })
+                        .filter(Boolean)
+                        .join('');
+
+                    document.getElementById('documents').innerHTML = `
+                        <div class="section">
+                            <h3 class="section-title">Submitted Documents</h3>
+                            <div class="row">
+                                ${documentHtml || '<div class="col-12"><div class="alert alert-info">No documents submitted</div></div>'}
+                                </div>
+                        </div>
+                    `;
+
+                    // Add console log to debug document data
+                    console.log('Application documents:', application.documents);
+                } else {
+                    console.log('No documents object found in application data');
+                    document.getElementById('documents').innerHTML = `
+                        <div class="section">
+                            <h3 class="section-title">Submitted Documents</h3>
+                            <div class="alert alert-info">No documents available</div>
+                        </div>
+                    `;
+                }
+
+                // Update status badge after the element is created
+                setTimeout(() => updateStatusBadge(application.status), 0);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('applicationDetails').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading application details: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Load application details when page loads
+        document.addEventListener('DOMContentLoaded', loadApplicationDetails);
+    </script>
+</body>
+</html> 

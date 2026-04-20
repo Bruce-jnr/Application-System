@@ -1,0 +1,87 @@
+@media print {
+    /* Hide everything except the voucher */
+    body * {
+        visibility: hidden;
+    }
+    
+    .voucher-container, .voucher-container * {
+        visibility: visible;
+    }
+    
+    .voucher-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+    }
+
+    /* School logo and header */
+    .school-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .school-logo {
+        max-width: 150px;
+        height: auto;
+        margin-bottom: 10px;
+    }
+
+    .school-name {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    /* Voucher details */
+    .voucher-details {
+        border: 2px solid #000;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .voucher-title {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        text-decoration: underline;
+    }
+
+    .voucher-info {
+        margin: 15px 0;
+    }
+
+    .voucher-info p {
+        margin: 10px 0;
+        font-size: 14px;
+    }
+
+    .voucher-info strong {
+        font-weight: bold;
+    }
+
+    /* QR Code */
+    .qr-code {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .qr-code img {
+        max-width: 150px;
+        height: auto;
+    }
+
+    /* Footer */
+    .voucher-footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 12px;
+    }
+
+    /* Hide print button when printing */
+    .print-button {
+        display: none;
+    }
+} 

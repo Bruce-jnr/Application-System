@@ -1,0 +1,15 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://nsacoe.edu.gh/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /apply-now-login/
+Disallow: /api/
+
+# Crawl-delay for all bots
+Crawl-delay: 10 

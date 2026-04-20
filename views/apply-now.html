@@ -1,0 +1,762 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NSACoE Admission - Apply Now</title>
+    <link rel="stylesheet" href="/public/css/apply-now.css" />
+    <link rel="icon" href="/public/images/logo1.png" type="image/icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unicons.iconscout.com/release/v4.0.8/css/line.css"
+    />
+    <script src="/public/js/script.js" defer></script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header-content">
+        <a href="/" class="logo">
+          <img src="/public/images/logo1.png" alt="NSACoE Logo" />
+        </a>
+        <div class="header-right">
+          <button id="logoutBtn">
+            <i class="uil uil-signout"></i> Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section class="container apply-section">
+      <h1>Application Portal</h1>
+      
+      <div class="application-process">
+        <h2>How to Apply</h2>
+        <div class="process-steps">
+          <div class="step-card">
+            <i class="uil uil-document-info"></i>
+            <h3>Check Requirements</h3>
+            <p>Ensure you meet the entry requirements for your program.</p>
+          </div>
+          
+          <div class="step-card">
+            <i class="uil uil-file-edit-alt"></i>
+            <h3>Complete Form</h3>
+            <p>Fill in your details accurately across all 6 steps.</p>
+          </div>
+          
+          <div class="step-card">
+            <i class="uil uil-print"></i>
+            <h3>Print & Submit</h3>
+            <p>Preview, print, and submit your application for review.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="entry-requirements">
+        <h2>Admission Requirements</h2>
+        <ul>
+          <li>WASSCE/SSCE with at least C6 in six subjects</li>
+          <li>Credits in English, Mathematics, and Science</li>
+          <li>Two elective subjects with grade C6 or better</li>
+          <li>Recent passport-sized photographs & ID</li>
+        </ul>
+      </div>
+
+      <!-- Progress Stepper -->
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar" style="display: none;"></div>
+        <div class="progress-steps">
+          <div class="step active" id="stepIndicator1">
+            <div class="step-circle">1</div>
+            <div class="step-text">Student</div>
+          </div>
+          <div class="step" id="stepIndicator2">
+            <div class="step-circle">2</div>
+            <div class="step-text">Contact</div>
+          </div>
+          <div class="step" id="stepIndicator3">
+            <div class="step-circle">3</div>
+            <div class="step-text">Academic</div>
+          </div>
+          <div class="step" id="stepIndicator4">
+            <div class="step-circle">4</div>
+            <div class="step-text">Guardian</div>
+          </div>
+          <div class="step" id="stepIndicator5">
+            <div class="step-circle">5</div>
+            <div class="step-text">Medical</div>
+          </div>
+          <div class="step" id="stepIndicator6">
+            <div class="step-circle">6</div>
+            <div class="step-text">Review</div>
+          </div>
+        </div>
+      </div>
+    
+    <form id="admissionForm" action="/api/applications" method="POST" enctype="multipart/form-data">
+        <!-- Add hidden input for serial number -->
+        <input type="hidden" id="serialNumber" name="serialNumber" value="<%= serialNumber %>">
+        
+        <!-- Student Information Section -->
+        <div class="form-section active" id="section1">
+            <h2>Applicant Information</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Title <span class="required">*</span></label>
+                    <select class="form-control" id="title" name="title" required>
+                        <option value="">Select Title</option>
+                        <option value="Mr">Mr</option>
+                        <option value="Mrs">Mrs</option>
+                        <option value="Miss">Miss</option>
+                        <option value="Dr">Dr</option>
+                        <option value="Prof">Prof</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="firstName">First Name <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="middleName">Middle Name</label>
+                    <input type="text" class="form-control" id="middleName" name="middleName">
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dob">Date of Birth <span class="required">*</span></label>
+                    <input type="date" class="form-control" id="dob" name="dob" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gender">Gender <span class="required">*</span></label>
+                    <select class="form-control" id="gender" name="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="place-of-birth">Place of Birth <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="place-of-birth" name="place-of-birth" required>
+                </div>
+        
+                <div class="form-group">
+                    <label for="birth-region">Region of Birth <span class="required">*</span></label>
+                    <select class="form-control" id="birth-region" name="birth-region" required>
+                        <option value="">Select Region</option>
+                        <option value="Greater Accra">Greater Accra</option>
+                        <option value="Ashanti">Ashanti</option>
+                        <option value="Western">Western</option>
+                        <option value="Eastern">Eastern</option>
+                        <option value="Central">Central</option>
+                        <option value="Northern">Northern</option>
+                        <option value="Upper East">Upper East</option>
+                        <option value="Upper West">Upper West</option>
+                        <option value="Volta">Volta</option>
+                        <option value="Bono">Bono</option>
+                        <option value="Bono East">Bono East</option>
+                        <option value="Ahafo">Ahafo</option>
+                        <option value="Western North">Western North</option>
+                        <option value="Oti">Oti</option>
+                        <option value="Savannah">Savannah</option>
+                        <option value="North East">North East</option>
+                    </select>
+                </div>
+            </div>
+    
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nationality">Nationality <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="nationality" name="nationality" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="residence">Place of Residence <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="residence" name="residence" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="residence-region">Region of Residence <span class="required">*</span></label>
+                    <select class="form-control" id="residence-region" name="residence-region" required>
+                        <option value="">Select Region</option>
+                        <option value="Greater Accra">Greater Accra</option>
+                        <option value="Ashanti">Ashanti</option>
+                        <option value="Western">Western</option>
+                        <option value="Eastern">Eastern</option>
+                        <option value="Central">Central</option>
+                        <option value="Northern">Northern</option>
+                        <option value="Upper East">Upper East</option>
+                        <option value="Upper West">Upper West</option>
+                        <option value="Volta">Volta</option>
+                        <option value="Bono">Bono</option>
+                        <option value="Bono East">Bono East</option>
+                        <option value="Ahafo">Ahafo</option>
+                        <option value="Western North">Western North</option>
+                        <option value="Oti">Oti</option>
+                        <option value="Savannah">Savannah</option>
+                        <option value="North East">North East</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="religion">Religion <span class="required">*</span></label>
+                    <select class="form-control" id="religion" name="religion" required>
+                        <option value="">Select Religion</option>
+                        <option value="Christianity">Christianity</option>
+                        <option value="Islam">Islam</option>
+                        <option value="Traditional">Traditional</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+    
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="marital-status">Marital Status</label>
+                    <select id="marital-status" name="marital-status" class="form-control" required>
+                        <option value="">Select Marital Status</option>
+                        <option value="single">Single</option>
+                        <option value="married">Married</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="number-of-children">Number of Children</label>
+                    <input type="number" id="number-of-children" name="number-of-children" class="form-control" min="0" required>
+                </div>
+            </div>
+
+                <div class="form-group">
+                    <label class="required">Ghanaian Languages Spoken</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-akan" name="languages[]" value="Akan">
+                        <label for="language-akan">Akan (Twi/Fante)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-ewe" name="languages[]" value="Ewe">
+                        <label for="language-ewe">Ewe</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-dagbani" name="languages[]" value="Dagbani">
+                        <label for="language-dagbani">Dagbani</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-dagaare" name="languages[]" value="Dagaare">
+                        <label for="language-dagaare">Dagaare</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-ga" name="languages[]" value="Ga">
+                        <label for="language-ga">Ga</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-gonja" name="languages[]" value="Gonja">
+                        <label for="language-gonja">Gonja</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-hausa" name="languages[]" value="Hausa">
+                        <label for="language-hausa">Hausa</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="language-other" name="languages[]" value="Other">
+                        <label for="language-other">Other Ghanaian Language</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="idType" class="required">ID Type</label>
+                    <select id="idType" name="idType" class="form-control" required>
+                        <option value="">Select ID Type</option>
+                        <option value="Ghana Card">Ghana Card</option>
+                        <option value="Passport">Passport</option>
+                        <option value="Driver's License">Driver's License</option>
+                        <option value="Voter ID">Voter ID</option>
+                        <option value="NHIS Card">NHIS Card</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="idNumber" class="required">ID Number</label>
+                    <input type="text" id="idNumber" name="idNumber" class="form-control" required 
+                           placeholder="Enter ID number">
+                </div>
+            </div>
+        
+        <div class="form-group">
+            <label class="required" for="photo">Upload Student Photo</label>
+            <input type="file" id="photo" name="photo" accept="image/*">
+            <p class="form-note">Maximum file size: 2MB (JPEG or PNG format)</p>
+        </div>
+        
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline" disabled>Previous</button>
+            <button type="button" class="btn next-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- Contact Information Section -->
+    <div class="form-section" id="section2">
+        <h2>Contact Information</h2>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="address">Address <span class="required">*</span></label>
+                <textarea id="address" name="address" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="city">City <span class="required">*</span></label>
+                <input type="text" id="city" name="city" required>
+            </div>
+        </div>
+        
+            <div class="form-group">
+                <label for="region">Region <span class="required">*</span></label>
+                <select id="region" name="region" class="form-control" required>
+                    <option value="">Select Region</option>
+                    <option value="Greater Accra">Greater Accra</option>
+                    <option value="Ashanti">Ashanti</option>
+                    <option value="Western">Western</option>
+                    <option value="Central">Central</option>
+                    <option value="Eastern">Eastern</option>
+                    <option value="Volta">Volta</option>
+                    <option value="Northern">Northern</option>
+                    <option value="Upper East">Upper East</option>
+                    <option value="Upper West">Upper West</option>
+                    <option value="Bono">Bono</option>
+                    <option value="Ahafo">Ahafo</option>
+                    <option value="Bono East">Bono East</option>
+                    <option value="Oti">Oti</option>
+                    <option value="Savannah">Savannah</option>
+                    <option value="North East">North East</option>
+                    <option value="Western North">Western North</option>
+                </select>
+            </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="district" class="required">District</label>
+                <input type="text" id="district" name="district" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country <span class="required">*</span></label>
+                <input type="text" id="country" name="country" class="form-control" required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="phone1">Phone Number 1 <span class="required">*</span></label>
+                <input type="tel" id="phone1" name="phone[]" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="phone2">Phone Number 2</label>
+                <input type="tel" id="phone2" name="phone[]" class="form-control">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="gpsCode">GPS Address</label>
+                <input type="text" id="gpsCode" name="gpsCode" class="form-control"
+                       placeholder="Example: GC-123-4567" required>
+                <p class="form-note">If available, include your Ghana Post GPS code</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+        </div>
+        
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline prev-btn">Previous</button>
+            <button type="button" class="btn next-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- Academic Information Section -->
+    <div class="form-section">
+        <h3>Academic Performance</h3>
+        
+        <!-- Core Subjects -->
+        <div class="subject-group">
+            <h4>Core Subjects (Mandatory)</h4>
+            
+            <div class="subject-row">
+                <div class="form-group">
+                    <label>English Language</label>
+                    <select name="coreSubjects[]" class="form-control" required>
+                        <option value="English Language" selected>English Language</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Index Number</label>
+                    <input type="text" name="coreIndexNumbers[]" class="form-control" placeholder="Ex: 0123456789" required>
+                </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <select name="coreGrades[]" class="form-control" required>
+                        <option value="">Select Grade</option>
+                        <option value="A1">A1</option>
+                        <option value="B2">B2 </option>
+                        <option value="B3">B3 </option>
+                        <option value="C4">C4 </option>
+                        <option value="C5">C5 </option>
+                        <option value="C6">C6 </option>
+                        <option value="D7">D7 </option>
+                        <option value="E8">E8 </option>
+                        <option value="F9">F9 </option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="subject-row">
+                <div class="form-group">
+                    <label>Mathematics</label>
+                    <select name="coreSubjects[]" class="form-control" required>
+                        <option value="Mathematics" selected>Mathematics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Index Number</label>
+                    <input type="text" name="coreIndexNumbers[]" class="form-control" placeholder="Ex: 0123456789" required>
+                </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <select name="coreGrades[]" class="form-control" required>
+                        <option value="">Select Grade</option>
+                        <option value="A1">A1</option>
+                        <option value="B2">B2</option>
+                        <option value="B3">B3</option>
+                        <option value="C4">C4</option>
+                        <option value="C5">C5</option>
+                        <option value="C6">C6</option>
+                        <option value="D7">D7</option>
+                        <option value="E8">E8</option>
+                        <option value="F9">F9</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="subject-row">
+                <div class="form-group">
+                    <label>Integrated Science</label>
+                    <select name="coreSubjects[]" class="form-control" required>
+                        <option value="Integrated Science" selected>Integrated Science</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Index Number</label>
+                    <input type="text" name="coreIndexNumbers[]" class="form-control" placeholder="Ex: 0123456789" required>
+                </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <select name="coreGrades[]" class="form-control" required>
+                        <option value="">Select Grade</option>
+                        <option value="A1">A1</option>
+                        <option value="B2">B2</option>
+                        <option value="B3">B3</option>
+                        <option value="C4">C4</option>
+                        <option value="C5">C5</option>
+                        <option value="C6">C6</option>
+                        <option value="D7">D7</option>
+                        <option value="E8">E8</option>
+                        <option value="F9">F9</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="subject-row">
+                <div class="form-group">
+                    <label>Social Studies</label>
+                    <select name="coreSubjects[]" class="form-control" required>
+                        <option value="Social Studies" selected>Social Studies</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Index Number</label>
+                    <input type="text" name="coreIndexNumbers[]" class="form-control" placeholder="Ex: 0123456789" required>
+                </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <select name="coreGrades[]" class="form-control" required>
+                        <option value="">Select Grade</option>
+                        <option value="A1">A1</option>
+                        <option value="B2">B2</option>
+                        <option value="B3">B3</option>
+                        <option value="C4">C4</option>
+                        <option value="C5">C5</option>
+                        <option value="C6">C6</option>
+                        <option value="D7">D7</option>
+                        <option value="E8">E8</option>
+                        <option value="F9">F9</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+    <!-- Academic Information Section -->
+    <div class="form-section" id="section3">
+        <h3>Academic Performance</h3>
+        
+        <!-- Core Subjects -->
+        <!-- Core Subjects already converted to subject-row in previous edit -->
+        
+        <!-- Elective Subjects -->
+        <div class="subject-group">
+            <h4>Elective Subjects (Select 3-4)</h4>
+            <div id="electiveContainer">
+                <!-- First Elective -->
+                <div class="subject-row elective-row">
+                    <div class="form-group">
+                        <label>Elective Subject 1</label>
+                        <select name="electiveSubjects[]" class="form-control" required>
+                            <option value="">Select Subject</option>
+                            <optgroup label="Science">
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="Elective Maths">Elective Maths</option>
+                            </optgroup>
+                            <optgroup label="Arts">
+                                <option value="Literature">Literature in English</option>
+                                <option value="Ghanaian Language">Ghanaian Language</option>
+                                <option value="French">French</option>
+                                <option value="CRS">Christian Religious Studies</option>
+                                <option value="History">History</option>
+                                <option value="Geography">Geography</option>
+                                <option value="Economics">Economics</option>
+                            </optgroup>
+                            <optgroup label="Vocational">
+                                <option value="Agriculture">Agriculture</option>
+                                <option value="Food & Nutrition">Food & Nutrition</option>
+                                <option value="Visual Arts">Visual Arts</option>
+                            </optgroup>
+                            <optgroup label="Business">
+                                <option value="Accounting">Financial Accounting</option>
+                                <option value="Business Mgmt">Business Management</option>
+                                <option value="Cost Accounting">Cost Accounting</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Index Number</label>
+                        <input type="text" name="electiveIndexNumbers[]" class="form-control" placeholder="Ex: 0123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Grade</label>
+                        <select name="electiveGrades[]" class="form-control" required>
+                            <option value="">Select Grade</option>
+                            <option value="A1">A1</option>
+                            <option value="B2">B2</option>
+                            <option value="B3">B3</option>
+                            <option value="C4">C4</option>
+                            <option value="C5">C5</option>
+                            <option value="C6">C6</option>
+                            <option value="D7">D7</option>
+                            <option value="E8">E8</option>
+                            <option value="F9">F9</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="add-btn" id="addElectiveBtn">
+                <i class="fas fa-plus"></i> Add Another Elective
+            </button>
+            <small class="form-note">Select between 3-4 elective subjects based on your program</small>
+        </div>
+
+        <!-- Academic Certificate Upload Section -->
+        <div class="form-group">
+            <h4>Academic Certificates</h4>
+            <div class="certificate-upload">
+                <label for="certificates" class="required">Upload Your Academic Certificates</label>
+                <input type="file" id="certificates" name="certificates" accept=".pdf,.jpg,.jpeg,.png" multiple required>
+                <p class="form-note">Upload your WASSCE/SSCE certificates and any other relevant academic documents (PDF, JPG, or PNG, max 2MB each)</p>
+                <div id="certificatePreview" class="certificate-preview"></div>
+            </div>
+        </div>
+
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline prev-btn">Previous</button>
+            <button type="button" class="btn next-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- Parent/Guardian Information Section -->
+    <div class="form-section" id="section4">
+        <h2>Parent/Guardian Information</h2>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="parent1Name">Parent/Guardian 1 Name <span class="required">*</span></label>
+                <input type="text" id="parent1Name" name="parent1Name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="parent1Relation">Relationship <span class="required">*</span></label>
+                <input type="text" id="parent1Relation" name="parent1Relation" required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="parent1Occupation">Occupation <span class="required">*</span></label>
+                <input type="text" id="parent1Occupation" name="parent1Occupation" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="parent1Phone">Phone <span class="required">*</span></label>
+                <input type="tel" id="parent1Phone" name="parent1Phone" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="parent1Email">Parent/Guardian 1 Email <span class="required">*</span></label>
+            <input type="email" id="parent1Email" name="parent1Email" required>
+        </div>
+        
+        <hr>
+        
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline prev-btn">Previous</button>
+            <button type="button" class="btn next-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- Medical Information Section -->
+    <div class="form-section" id="section5">
+        <h2>Emergency Contact</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="emergencyContact">Emergency Contact Name <span class="required">*</span></label>
+                <input type="text" id="emergencyContact" name="emergencyContact" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="emergencyPhone">Emergency Contact Phone <span class="required">*</span></label>
+                <input type="tel" id="emergencyPhone" name="emergencyPhone" required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="emergencyRelation">Relationship <span class="required">*</span></label>
+                <input type="text" id="emergencyRelation" name="emergencyRelation" required>
+            </div>
+
+            <div class="form-group">
+                <label for="disability-status">Do you have any disability?</label>
+                <select id="disability-status" name="disability-status" class="form-control" required>
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline prev-btn">Previous</button>
+            <button type="button" class="btn next-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- Review and Submit Section -->
+    <div class="form-section" id="section6">
+        <h2>Review Your Information</h2>
+        
+        <div class="form-group">
+            <label for="hearAbout">How did you hear about us?</label>
+            <select id="hearAbout" name="hearAbout">
+                <option value="">Select Option</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Friend">Friend</option>
+                <option value="Website">Website</option>
+                <option value="Advertisement">Advertisement</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="question">Do you have any questions?</label>
+            <textarea id="question" name="question" rows="3"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                <label for="agreeTerms" class="required">I certify that the information provided is accurate and complete.</label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="agreePolicy" name="agreePolicy" required>
+                <label for="agreePolicy" class="required">I agree to the school's admission policies and terms.</label>
+            </div>
+        </div>
+        
+        <div class="form-navigation">
+            <button type="button" class="btn btn-outline prev-btn">Previous</button>
+            <button type="button" class="btn btn-primary" id="previewBtn">Preview Application</button>
+        </div> 
+    </div>
+</form>
+      </div>
+    </section>
+
+    <footer>&copy;<span id="currentYear"></span> NSACoE Admission Portal. All rights reserved</footer>
+<script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+</script>
+    
+    <!-- Preview Modal Container -->
+    <div id="preview-modal" class="preview-modal"></div>
+
+    <!-- Add preview modal CSS -->
+    <link rel="stylesheet" href="/public/css/preview-modal.css" />
+    
+    <!-- Add preview modal JavaScript -->
+    <script src="/public/js/preview-modal.js" defer></script>
+    <script src="/public/js/apply-now.js" defer></script>
+    <script src="/public/js/script.js" defer></script>
+  </body>
+</html>
+
+<!-- Custom Popup -->
+<div id="customPopup" class="popup">
+  <div class="popup-content">
+    <p id="popupMessage">Please fill in all required fields before proceeding.</p>
+    <button id="closePopup">OK</button>
+  </div>
+</div>
+
+

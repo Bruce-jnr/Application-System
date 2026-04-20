@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Nsawkaw College of Education</title>
+    <link rel="stylesheet" href="/public/css/style.css">
+    <link rel="icon" href="/public/images/logo1.png" type="image/icon">
+    <style>
+        .error-container {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--color-primary);
+            margin: 0;
+            line-height: 1;
+        }
+        .error-message {
+            font-size: 2rem;
+            color: var(--color-gray-700);
+            margin: 1rem 0 2rem;
+        }
+        .error-description {
+            color: var(--color-gray-600);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+        .home-button {
+            padding: 1rem 2rem;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .home-button:hover {
+            background: var(--color-primary-variant);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container nav-container">
+            <div class="logo-name">
+                <img src="/public/images/logo1.png" alt="Nsawkaw College of Education logo" class="logo">
+                <a class="brand-name" href="/">Nsawkaw College of Education</a>
+                <a class="brand-name-short" href="/">Nsawkaw CoE</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="error-container">
+        <h1 class="error-code">404</h1>
+        <h2 class="error-message">Page Not Found</h2>
+        <p class="error-description">
+            The page you are looking for might have been removed, had its name changed, 
+            or is temporarily unavailable.
+        </p>
+        <a href="/" class="home-button">Return to Homepage</a>
+    </section>
+
+    <footer>
+        &copy;<span id="currentYear"></span> Nsawkaw CoE. All rights reserved
+    </footer>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html> 
