@@ -291,6 +291,19 @@ h1, h2, h3, h4 {
   margin-left: 2px;
 }
 
+.invalid {
+  border-color: #e53e3e !important;
+  background-color: #fff5f5 !important;
+  box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.1) !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
 .checkbox-group {
   display: flex;
   align-items: center;

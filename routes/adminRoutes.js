@@ -758,7 +758,7 @@ router.post('/applications/:id/approve', isAdmin, async (req, res) => {
 });
 
 // Reject application
-router.post('/admin/applications/:id/reject', isAdmin, async (req, res) => {
+router.post('/applications/:id/reject', isAdmin, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const connection = await pool.getConnection();
 

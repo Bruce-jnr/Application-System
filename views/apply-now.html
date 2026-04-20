@@ -236,7 +236,7 @@
     
             <div class="form-row">
                 <div class="form-group">
-                    <label for="marital-status">Marital Status</label>
+                    <label for="marital-status">Marital Status <span class="required">*</span></label>
                     <select id="marital-status" name="marital-status" class="form-control" required>
                         <option value="">Select Marital Status</option>
                         <option value="single">Single</option>
@@ -245,7 +245,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="number-of-children">Number of Children</label>
+                    <label for="number-of-children">Number of Children <span class="required">*</span></label>
                     <input type="number" id="number-of-children" name="number-of-children" class="form-control" min="0" required>
                 </div>
             </div>
@@ -360,8 +360,8 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="district" class="required">District</label>
-                <input type="text" id="district" name="district" class="form-control">
+                <label for="district">District <span class="required">*</span></label>
+                <input type="text" id="district" name="district" class="form-control" required>
             </div>
 
             <div class="form-group">
@@ -385,7 +385,7 @@
             <div class="form-group">
                 <label for="gpsCode">GPS Address</label>
                 <input type="text" id="gpsCode" name="gpsCode" class="form-control"
-                       placeholder="Example: GC-123-4567" required>
+                       placeholder="Example: GC-123-4567">
                 <p class="form-note">If available, include your Ghana Post GPS code</p>
             </div>
             
@@ -402,7 +402,7 @@
     </div>
     
     <!-- Academic Information Section -->
-    <div class="form-section">
+    <div class="form-section" id="section3">
         <h3>Academic Performance</h3>
         
         <!-- Core Subjects -->
@@ -522,18 +522,10 @@
             </div>
         </div>
         
-    <!-- Academic Information Section -->
-    <div class="form-section" id="section3">
-        <h3>Academic Performance</h3>
-        
-        <!-- Core Subjects -->
-        <!-- Core Subjects already converted to subject-row in previous edit -->
-        
         <!-- Elective Subjects -->
         <div class="subject-group">
             <h4>Elective Subjects (Select 3-4)</h4>
             <div id="electiveContainer">
-                <!-- First Elective -->
                 <div class="subject-row elective-row">
                     <div class="form-group">
                         <label>Elective Subject 1</label>
@@ -598,7 +590,7 @@
         <div class="form-group">
             <h4>Academic Certificates</h4>
             <div class="certificate-upload">
-                <label for="certificates" class="required">Upload Your Academic Certificates</label>
+                <label for="certificates">Upload Your Academic Certificates <span class="required">*</span></label>
                 <input type="file" id="certificates" name="certificates" accept=".pdf,.jpg,.jpeg,.png" multiple required>
                 <p class="form-note">Upload your WASSCE/SSCE certificates and any other relevant academic documents (PDF, JPG, or PNG, max 2MB each)</p>
                 <div id="certificatePreview" class="certificate-preview"></div>

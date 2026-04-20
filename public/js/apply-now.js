@@ -63,21 +63,53 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Validate current section before proceeding
   function validateSection(index) {
-    const currentSection = sections[index];
-    const requiredFields = currentSection.querySelectorAll('[required]');
+    const currentSectionView = sections[index];
+    if (!currentSectionView) return true;
+    
+    const requiredFields = currentSectionView.querySelectorAll('[required]');
     let isValid = true;
+    let firstInvalidField = null;
 
     requiredFields.forEach((field) => {
-      if (!field.value.trim()) {
+      // Handle different input types
+      let value = '';
+      if (field.type === 'checkbox') {
+        // For checkboxes, we check if at least one in the group is checked if it's a name[] type
+        // But here [required] on a single checkbox means it MUST be checked (like Terms)
+        if (!field.checked) {
+          isValid = false;
+          field.classList.add('invalid');
+          if (!firstInvalidField) firstInvalidField = field;
+        } else {
+          field.classList.remove('invalid');
+        }
+        return;
+      }
+
+      value = field.value.trim();
+      
+      if (!value) {
         field.classList.add('invalid');
         isValid = false;
+        if (!firstInvalidField) firstInvalidField = field;
+        
+        // Add listener to remove invalid class on input
+        field.addEventListener('input', function() {
+          if (this.value.trim()) {
+            this.classList.remove('invalid');
+          }
+        }, { once: true });
       } else {
         field.classList.remove('invalid');
       }
     });
 
     if (!isValid) {
-      showPopup('Please fill in all required fields before proceeding.');
+      showPopup('Please fill in all required fields (highlighted in red) before proceeding.');
+      if (firstInvalidField) {
+        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalidField.focus();
+      }
     }
 
     return isValid;
@@ -86,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Update progress bar
   function updateProgress() {
     const progress = ((currentSection + 1) / sections.length) * 100;
-    progressBar.style.width = progress + '%';
+    if (progressBar) progressBar.style.width = progress + '%';
   }
 
   // Initialize progress bar
@@ -190,6 +222,20 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('admissionForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // Validate ALL sections before submission
+  let isAllValid = true;
+  for (let i = 0; i < sections.length; i++) {
+    if (!validateSection(i)) {
+      isAllValid = false;
+      currentSection = i;
+      showSection(currentSection);
+      updateProgress();
+      break; 
+    }
+  }
+
+  if (!isAllValid) return;
+
   const form = e.target;
   const formData = new FormData(form);
 
@@ -222,47 +268,16 @@ const closePopup = document.getElementById('closePopup');
 
 // Show popup with custom message
 function showPopup(message) {
-  popupMessage.textContent = message;
-  customPopup.style.display = 'flex';
+  if (popupMessage) popupMessage.textContent = message;
+  if (customPopup) customPopup.style.display = 'flex';
 }
 
 // Close popup
-closePopup.addEventListener('click', () => {
-  customPopup.style.display = 'none';
-});
-
-// Validate form on submission
-document
-  .getElementById('admissionForm')
-  .addEventListener('submit', function (e) {
-    // Get all required fields
-    const requiredFields = this.querySelectorAll('.required');
-    let isValid = true;
-    let firstInvalidField = null;
-
-    requiredFields.forEach((field) => {
-      const inputElement = field.querySelector('input, select, textarea');
-      if (inputElement && !inputElement.value.trim()) {
-        if (!firstInvalidField) {
-          firstInvalidField = inputElement;
-        }
-        isValid = false;
-        inputElement.classList.add('invalid');
-        field.classList.add('invalid-label');
-      } else {
-        inputElement?.classList.remove('invalid');
-        field.classList.remove('invalid-label');
-      }
-    });
-
-    if (!isValid) {
-      e.preventDefault();
-      showPopup('Please fill in all required fields before proceeding.');
-      if (firstInvalidField) {
-        firstInvalidField.focus();
-      }
-    }
+if (closePopup) {
+  closePopup.addEventListener('click', () => {
+    customPopup.style.display = 'none';
   });
+}
 
 // Add validation on field blur
 document.querySelectorAll('[required]').forEach((field) => {
