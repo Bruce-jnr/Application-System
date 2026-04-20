@@ -59,14 +59,14 @@ A comprehensive, secure, and user-friendly web portal for the NSACoE (College of
    ```ini
    # Server Configuration
    PORT=3000
-   NODE_ENV=development
+ 
 
    # Database Configuration
    DB_HOST=localhost
    DB_USER=your_db_user
    DB_PASSWORD=your_db_password
    DB_NAME=nsacoe_admissions
-   FORCE_DB_INIT=false
+
 
    # Session Configuration
    SESSION_SECRET=your_secret_key
@@ -76,8 +76,6 @@ A comprehensive, secure, and user-friendly web portal for the NSACoE (College of
    SMS_API_KEY=your_sms_api_key
    SMS_SENDER_ID=NSACoE
 
-   # Application URL
-   FRONTEND_URL=http://localhost:3000
    ```
 
 4. **Initialize Database**:
