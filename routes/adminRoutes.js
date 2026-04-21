@@ -708,16 +708,20 @@ router.post('/applications/:id/approve', isAdmin, async (req, res) => {
       throw new Error('Application is already approved');
     }
 
+    // Generate a 6-digit PIN
+    const admissionPin = Math.floor(100000 + Math.random() * 900000).toString();
+
     // Update application status and add approval metadata
     await connection.query(
       `UPDATE applicants 
       SET 
         status = 'approved',
+        admission_pin = ?,
         approved_by = ?,
         approved_at = NOW(),
         updated_at = NOW()
       WHERE id = ?`,
-      [req.session.adminId, req.params.id]
+      [admissionPin, req.session.adminId, req.params.id]
     );
 
     // Send SMS notification
@@ -726,7 +730,8 @@ router.post('/applications/:id/approve', isAdmin, async (req, res) => {
     } ${application.last_name}`.trim();
     const message = smsService.getApplicationApprovedMessage(
       fullName,
-      application.serial_number
+      application.serial_number,
+      admissionPin
     );
     const smsResult = await smsService.sendSMS(
       application.phone_number,

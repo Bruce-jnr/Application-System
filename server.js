@@ -22,6 +22,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const vendorApiRoutes = require('./routes/vendorApiRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const studentPortalRoutes = require('./routes/studentPortalRoutes');
 
 const app = express();
 
@@ -200,15 +201,17 @@ app.use(
   })
 );
 
-// Add session debugging middleware
+// Add session debugging middleware (admin/api routes only)
 app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'development') {
-    logger.debug('Session data:', {
-      id: req.session.id,
-      isAdmin: req.session.isAdmin,
-      adminId: req.session.adminId,
-      username: req.session.username,
-    });
+  if (process.env.NODE_ENV === 'development' && process.env.DEBUG_LOGS === 'true') {
+    if (req.path.startsWith('/api/admin') || req.path.startsWith('/admin')) {
+      logger.debug('Session data:', {
+        id: req.session.id,
+        isAdmin: req.session.isAdmin,
+        adminId: req.session.adminId,
+        username: req.session.username,
+      });
+    }
   }
   next();
 });
@@ -781,8 +784,19 @@ app.get('/admin-login', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-login.html'));
 });
 
+// Student Portal Routes
+app.use('/student', studentPortalRoutes);
 
+// Student Admission Letter route
+app.get('/student/admission-letter', (req, res) => {
+  if (!req.session || !req.session.isStudent) return res.redirect('/student/login');
+  res.sendFile(path.join(__dirname, 'views', 'student-admission-letter.html'));
+});
 
+// Student Logout
+app.post('/student/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/student/login'));
+});
 
 
 app.get('/apply-now', (req, res, next) => {

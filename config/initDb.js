@@ -130,6 +130,7 @@ async function initializeDatabase() {
         agreed_to_terms BOOLEAN,
         agreed_to_policy BOOLEAN,
         status ENUM('pending', 'shortlisted', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+        admission_pin VARCHAR(6) NULL,
         approved_by INT,
         approved_at TIMESTAMP NULL,
         updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

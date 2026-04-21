@@ -142,8 +142,8 @@ class SMSService {
     }
 
     // Template for application approval notification
-    getApplicationApprovedMessage(applicantName, serialNumber) {
-        return `Dear ${applicantName}, Congratulations! Your application to NSAWKAW College of Education has been approved. Your Serial Number is ${serialNumber}. Please you will be contacted for further instructions on how to proceed with your admission. Best regards, NSACoE`;
+    getApplicationApprovedMessage(applicantName, serialNumber, pin) {
+        return `Dear ${applicantName}, Congratulations! Your application to NSAWKAW College of Education has been approved. Your Serial Number is ${serialNumber} and your Admission PIN is ${pin}. Visit ${process.env.FRONTEND_URL}/student/login to download your admission documents. Best regards, NSACoE`;
     }
 
     // Template for application rejection notification

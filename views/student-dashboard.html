@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Documents - NSACoE Student Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f0f4f8; min-height: 100vh; }
+        .topbar {
+            background: linear-gradient(90deg, #0f2027, #203a43);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar .brand { color: #fff; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.75rem; }
+        .topbar img { width: 40px; height: 40px; object-fit: contain; }
+        .welcome-banner {
+            background: linear-gradient(135deg, #062dc9, #18037c);
+            color: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .doc-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .doc-card:hover { transform: translateY(-6px); box-shadow: 0 12px 35px rgba(0,0,0,0.15); }
+        .doc-icon {
+            width: 70px; height: 70px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; margin: 0 auto 1rem;
+        }
+        .badge-admitted { background: #d1fae5; color: #065f46; font-size: 0.8rem; padding: 0.4rem 0.85rem; border-radius: 99px; font-weight: 600; }
+        .btn-download {
+            border-radius: 10px; font-weight: 600; padding: 0.65rem 1.25rem;
+            transition: all 0.25s;
+        }
+        .btn-logout { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; }
+        .btn-logout:hover { background: rgba(255,255,255,0.25); color: #fff; }
+        #student-name-placeholder { font-size: 1.5rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">
+            <img src="/public/images/logo.jpg" alt="NSACoE" onerror="this.style.display='none'">
+            NSACoE Student Portal
+        </div>
+        <form method="POST" action="/student/logout">
+            <button type="submit" class="btn btn-logout btn-sm">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </button>
+        </form>
+    </div>
+
+    <div class="container py-4">
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <p class="mb-1 opacity-75 fw-500">Welcome,</p>
+                    <h2 id="student-name-placeholder" class="mb-1">Loading...</h2>
+                    <p class="mb-0 opacity-75">Serial No: <strong id="student-serial">—</strong></p>
+                </div>
+                <span class="badge-admitted"><i class="fas fa-check-circle me-1"></i>Admitted</span>
+            </div>
+        </div>
+
+        <!-- Document Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="doc-card card text-center p-4">
+                    <div class="doc-icon" style="background:#dbeafe; color:#1d4ed8;">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h5 class="fw-600 mb-2">Admission Letter</h5>
+                    <p class="text-muted small mb-3">Your official offer of admission from NSACoE.</p>
+                    <a href="/student/admission-letter" target="_blank" class="btn btn-primary btn-download w-100">
+                        <i class="fas fa-eye me-2"></i>View & Print
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="doc-card card text-center p-4">
+                    <div class="doc-icon" style="background:#fef3c7; color:#92400e;">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h5 class="fw-600 mb-2">Admission Prospectus</h5>
+                    <p class="text-muted small mb-3">College prospectus with programmes and regulations.</p>
+                    <a href="/documents/prospectus.pdf" class="btn btn-warning btn-download w-100 text-dark">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="doc-card card text-center p-4">
+                    <div class="doc-icon" style="background:#dcfce7; color:#166534;">
+                        <i class="fas fa-pen-to-square"></i>
+                    </div>
+                    <h5 class="fw-600 mb-2">Acceptance Form</h5>
+                    <p class="text-muted small mb-3">Your acceptance letter to confirm enrollment.</p>
+                    <a href="/documents/acceptance-letter.pdf" class="btn btn-success btn-download w-100">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important notice -->
+        <div class="card border-0 rounded-4 p-4" style="background: #fff8e1; border-left: 4px solid #f59e0b !important;">
+            <h6 class="fw-bold mb-2"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Important Notice</h6>
+            <ul class="mb-0 text-muted small">
+                <li>Print and bring your Admission Letter on reporting day.</li>
+                <li>Pay your fees at GCB (Ac: 7111130001820) or CBG (Ac: 2216537640001).</li>
+                <li>For help, call <strong>0546535902</strong> or <strong>0547266259</strong>.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('/student/api/me');
+                const data = await res.json();
+                if (data.success && data.student) {
+                    const s = data.student;
+                    const name = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(' ');
+                    document.getElementById('student-name-placeholder').textContent = name;
+                    document.getElementById('student-serial').textContent = s.serial_number || '—';
+                } else {
+                    window.location.href = '/student/login';
+                }
+            } catch (e) {
+                window.location.href = '/student/login';
+            }
+        })();
+    </script>
+</body>
+</html>
