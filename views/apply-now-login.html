@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -27,20 +27,35 @@
           class="login-logo"
         />
         <h1>Student Portal</h1>
-        <p>Logins with your serial number and PIN to start or continue your application.</p>
+        <p>
+          Login with your serial number and PIN to start or continue your
+          application.
+        </p>
       </header>
-      
+
       <form id="voucher-login-form">
         <div class="form-group">
           <label for="serial">Voucher Serial Number</label>
-          <input type="text" id="serial" name="serial" placeholder="Enter serial number" required />
+          <input
+            type="text"
+            id="serial"
+            name="serial"
+            placeholder="Enter serial number"
+            required
+          />
         </div>
-        
+
         <div class="form-group">
           <label for="pin">Voucher PIN</label>
-          <input type="password" id="pin" name="pin" placeholder="••••••••" required />
+          <input
+            type="password"
+            id="pin"
+            name="pin"
+            placeholder="••••••••"
+            required
+          />
         </div>
-        
+
         <button type="submit" id="submit-btn" class="btn-primary">Login</button>
         <div id="error-message"></div>
       </form>

@@ -291,6 +291,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Middleware
 app.use(limiter);
+// Serve static assets from the public directory at the web root.
+// This makes files available as /css/..., /js/..., /images/...
+app.use(express.static(path.join(__dirname, 'public')));
+// Keep the old /public mount for backward compatibility with existing
+// templates that reference /public/... paths.
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
