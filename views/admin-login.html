@@ -53,17 +53,9 @@
     </div>
 
     <script>
-      // Helper function to get the correct API base URL
+      // Helper function to get the correct API base URL.
+      // Use the current origin (same-origin) to avoid cross-site cookie issues.
       function getApiBaseUrl() {
-        const hostname = window.location.hostname;
-        const protocol = window.location.protocol;
-
-        // If we're on the main domain, try to use the app subdomain
-        if (hostname === 'nsacoe.edu.gh' || hostname === 'www.nsacoe.edu.gh') {
-          return `${protocol}//app.nsacoe.edu.gh`;
-        }
-
-        // Otherwise use current origin
         return window.location.origin;
       }
 

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Check if already logged in
   async function checkLoginStatus() {
     try {
-      const response = await fetch('/api/auth/check-applicant');
+  const response = await fetch('/api/auth/check-applicant', { credentials: 'include' });
       const data = await response.json();
       
       if (data.success) {
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({ serial, pin }),
         });
 
