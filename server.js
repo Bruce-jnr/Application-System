@@ -26,8 +26,9 @@ const studentPortalRoutes = require('./routes/studentPortalRoutes');
 
 const app = express();
 
-// Trust reverse proxy (Apache/NGINX/Passenger) for correct IP and secure cookies
-app.set('trust proxy', 1);
+// Trust reverse proxies (Apache/NGINX/Cloudflare/Passenger) for correct IP and secure cookies.
+// In production this must be true so req.secure reflects X-Forwarded-Proto.
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? true : 1);
 
 // Production-specific middleware
 if (process.env.NODE_ENV === 'production') {
@@ -218,12 +219,13 @@ const sessionCookieSameSite =
   sessionCookieSameSiteRaw === 'strict'
     ? sessionCookieSameSiteRaw
     : process.env.NODE_ENV === 'production'
-      ? 'none'
+      ? 'lax'
       : 'lax';
 
 app.use(
   session({
-    key: process.env.SESSION_COOKIE_NAME || 'nsacoe_admin_session',
+    // express-session uses `name`, not `key`
+    name: process.env.SESSION_COOKIE_NAME || 'nsacoe_admin_session',
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
     resave: false,

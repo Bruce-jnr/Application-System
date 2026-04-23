@@ -19,8 +19,11 @@ DB_SSL=true
 SESSION_SECRET=your_very_secure_production_session_secret_key_here
 SESSION_COOKIE_NAME=nsacoe_admin_session
 SESSION_MAX_AGE_MS=86400000
-SESSION_SECURE=true
-SESSION_SAMESITE=none
+# Recommended behind reverse proxies:
+# - secure=auto avoids cookies not being set when HTTPS is terminated upstream
+# - sameSite=lax is sufficient for same-site (including subdomains) admin flow
+SESSION_SECURE=auto
+SESSION_SAMESITE=lax
 SESSION_ROLLING=true
 SESSION_COOKIE_DOMAIN=.nsacoe.edu.gh
 
