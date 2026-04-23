@@ -181,6 +181,28 @@ async function initDb() {
 }
 
 // Session middleware
+const sessionCookieSecureRaw = (process.env.SESSION_SECURE || '').toLowerCase();
+const sessionCookieSecure =
+  sessionCookieSecureRaw === 'auto'
+    ? 'auto'
+    : sessionCookieSecureRaw === 'true'
+      ? true
+      : sessionCookieSecureRaw === 'false'
+        ? false
+        : process.env.NODE_ENV === 'production'
+          ? 'auto'
+          : false;
+
+const sessionCookieSameSiteRaw = (process.env.SESSION_SAMESITE || '').toLowerCase();
+const sessionCookieSameSite =
+  sessionCookieSameSiteRaw === 'none' ||
+  sessionCookieSameSiteRaw === 'lax' ||
+  sessionCookieSameSiteRaw === 'strict'
+    ? sessionCookieSameSiteRaw
+    : process.env.NODE_ENV === 'production'
+      ? 'none'
+      : 'lax';
+
 app.use(
   session({
     key: process.env.SESSION_COOKIE_NAME || 'nsacoe_admin_session',
@@ -189,11 +211,13 @@ app.use(
     resave: false,
     saveUninitialized: false,
     rolling: (process.env.SESSION_ROLLING || 'true').toLowerCase() === 'true',
+    proxy: process.env.NODE_ENV === 'production',
     cookie: {
       maxAge: Number(process.env.SESSION_MAX_AGE_MS || 86400000), // 24 hours
-      secure: process.env.NODE_ENV === 'production', // true for production HTTPS, false for development
+      // 'auto' is safest behind reverse proxies (uses req.secure / X-Forwarded-Proto)
+      secure: sessionCookieSecure,
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
+      sameSite: sessionCookieSameSite, // 'none' for cross-site in production
       domain:
         process.env.SESSION_COOKIE_DOMAIN ||
         (process.env.NODE_ENV === 'production' ? '.nsacoe.edu.gh' : undefined),
