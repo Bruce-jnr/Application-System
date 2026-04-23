@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 function generateSerialNumber() {
   // Example: 10-character alphanumeric
-  return 'NSC' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  return 'NSCE' + crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
 function generatePin() {

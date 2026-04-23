@@ -14,6 +14,18 @@ const apiKeyAuth = async (req, res, next) => {
             return res.status(401).json({ error: 'Invalid API key' });
         }
 
+        if (vendor.status === 'suspended') {
+            return res.status(403).json({
+                error: 'API key is suspended and will be reactivated when sales of forms begins'
+            });
+        }
+
+        if (vendor.status === 'expired') {
+            return res.status(403).json({
+                error: 'API key has expired'
+            });
+        }
+
         // Add vendor information to request object
         req.vendor = vendor;
         next();

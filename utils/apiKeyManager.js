@@ -67,27 +67,48 @@ class ApiKeyManager {
     static async validateApiKey(apiKey) {
         try {
             const [rows] = await pool.query(
-                `SELECT v.id as vendor_id, v.username, vk.id as key_id, vk.api_key_hash 
+                `SELECT 
+                    v.id as vendor_id, 
+                    v.username, 
+                    vk.id as key_id, 
+                    vk.api_key_hash,
+                    vk.is_active,
+                    vk.expires_at
                  FROM vendor_api_keys vk 
-                 JOIN users v ON vk.vendor_id = v.id 
-                 WHERE vk.is_active = true 
-                 AND (vk.expires_at IS NULL OR vk.expires_at > NOW())`
+                 JOIN users v ON vk.vendor_id = v.id`
             );
 
             for (const row of rows) {
                 const isValid = await bcrypt.compare(apiKey, row.api_key_hash);
-                if (isValid) {
-                    // Update last used timestamp
-                    await pool.query(
-                        'UPDATE vendor_api_keys SET last_used_at = NOW() WHERE id = ?',
-                        [row.key_id]
-                    );
+                if (!isValid) continue;
 
+                if (!row.is_active) {
                     return {
+                        status: 'suspended',
                         vendorId: row.vendor_id,
-                        username: row.username
+                        username: row.username,
                     };
                 }
+
+                if (row.expires_at && new Date(row.expires_at) <= new Date()) {
+                    return {
+                        status: 'expired',
+                        vendorId: row.vendor_id,
+                        username: row.username,
+                    };
+                }
+
+                // Update last used timestamp
+                await pool.query(
+                    'UPDATE vendor_api_keys SET last_used_at = NOW() WHERE id = ?',
+                    [row.key_id]
+                );
+
+                return {
+                    status: 'ok',
+                    vendorId: row.vendor_id,
+                    username: row.username
+                };
             }
 
             return null;
