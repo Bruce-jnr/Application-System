@@ -14,6 +14,15 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+async function getVoucherPrice(pool) {
+  const [rows] = await pool.query(
+    "SELECT `value` FROM app_settings WHERE `key` = 'voucher_price' LIMIT 1"
+  );
+  const raw = rows?.[0]?.value;
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : 360.0;
+}
+
 // Admin login route
 router.post('/login', async (req, res) => {
   console.log('Admin login attempt:', {
@@ -118,6 +127,7 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
+    const voucherPrice = await getVoucherPrice(pool);
     // Get the last voucher number
     const [lastVoucher] = await pool.query(`
       SELECT serial_number 
@@ -153,8 +163,8 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
 
     // Insert into database
     const [result] = await pool.query(
-      'INSERT INTO vouchers (serial_number, pin_hash, created_by) VALUES (?, ?, ?)',
-      [serialNumber, pinHash, req.session.adminId]
+      'INSERT INTO vouchers (serial_number, pin_hash, created_by, price) VALUES (?, ?, ?, ?)',
+      [serialNumber, pinHash, req.session.adminId, voucherPrice]
     );
 
     res.json({
@@ -163,6 +173,7 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
         id: result.insertId,
         serial_number: serialNumber,
         pin: pin, // Send the plain PIN only once
+        price: voucherPrice,
       },
     });
   } catch (error) {
@@ -171,6 +182,96 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
       success: false,
       message: 'Error generating voucher',
     });
+  }
+});
+
+// Settings: voucher price
+router.get('/settings', isAdmin, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  try {
+    const voucherPrice = await getVoucherPrice(pool);
+    res.json({ success: true, settings: { voucher_price: voucherPrice } });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to load settings' });
+  }
+});
+
+router.put('/settings/voucher-price', isAdmin, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  const raw = req.body?.voucher_price ?? req.body?.price;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'voucher_price must be a positive number',
+    });
+  }
+
+  try {
+    await pool.query(
+      "INSERT INTO app_settings (`key`, `value`) VALUES ('voucher_price', ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+      [parsed.toFixed(2)]
+    );
+    res.json({ success: true, voucher_price: parsed });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to update voucher price' });
+  }
+});
+
+// Vendors + API keys management
+router.get('/vendors', isAdmin, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  try {
+    const [vendors] = await pool.query(
+      'SELECT id, username, name, created_at FROM users WHERE user_type = "vendor" ORDER BY created_at DESC'
+    );
+    res.json({ success: true, vendors });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to load vendors' });
+  }
+});
+
+router.get('/vendors/:vendorId/api-keys', isAdmin, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  const vendorId = Number.parseInt(req.params.vendorId, 10);
+  if (!Number.isFinite(vendorId)) {
+    return res.status(400).json({ success: false, message: 'Invalid vendorId' });
+  }
+  try {
+    const [keys] = await pool.query(
+      `SELECT id, vendor_id, name, is_active, created_at, last_used_at, expires_at
+       FROM vendor_api_keys
+       WHERE vendor_id = ?
+       ORDER BY created_at DESC`,
+      [vendorId]
+    );
+    res.json({ success: true, apiKeys: keys });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to load API keys' });
+  }
+});
+
+router.patch('/api-keys/:keyId', isAdmin, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  const keyId = Number.parseInt(req.params.keyId, 10);
+  const isActive = req.body?.is_active;
+  if (!Number.isFinite(keyId)) {
+    return res.status(400).json({ success: false, message: 'Invalid keyId' });
+  }
+  if (typeof isActive !== 'boolean') {
+    return res.status(400).json({ success: false, message: 'is_active must be boolean' });
+  }
+  try {
+    const [result] = await pool.query(
+      'UPDATE vendor_api_keys SET is_active = ? WHERE id = ?',
+      [isActive ? 1 : 0, keyId]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: 'API key not found' });
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to update API key' });
   }
 });
 

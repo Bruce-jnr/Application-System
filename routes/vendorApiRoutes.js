@@ -5,6 +5,15 @@ const apiKeyAuth = require('../middleware/apiKeyAuth');
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 
+async function getVoucherPrice() {
+    const [rows] = await pool.query(
+        "SELECT `value` FROM app_settings WHERE `key` = 'voucher_price' LIMIT 1"
+    );
+    const raw = rows?.[0]?.value;
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : 360.0;
+}
+
 // Generate a serial number
 function generateSerialNumber() {
     const prefix = 'NSCE25';
@@ -79,10 +88,11 @@ router.post('/vouchers/generate', apiKeyAuth, async (req, res) => {
             const serialNumber = generateSerialNumber();
             const pin = generatePIN();
             const pinHash = await bcrypt.hash(pin, 10);
+            const price = await getVoucherPrice();
 
             await connection.query(
-                'INSERT INTO vouchers (serial_number, pin_hash, created_by) VALUES (?, ?, ?)',
-                [serialNumber, pinHash, vendorId]
+                'INSERT INTO vouchers (serial_number, pin_hash, created_by, price) VALUES (?, ?, ?, ?)',
+                [serialNumber, pinHash, vendorId, price]
             );
 
             await connection.commit();
@@ -91,7 +101,8 @@ router.post('/vouchers/generate', apiKeyAuth, async (req, res) => {
                 success: true,
                 voucher: {
                     serialNumber,
-                    pin
+                    pin,
+                    price
                 },
                 message: 'Voucher generated successfully'
             });

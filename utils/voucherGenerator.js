@@ -19,7 +19,7 @@ async function createVoucher(pool) {
   return new Promise((resolve, reject) => {
     pool.query(
       'INSERT INTO vouchers (serial_number, pin_hash, price, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY))',
-      [serial, pinHash, 100.0], // Set your price as needed
+      [serial, pinHash, 360.0],
       (err, results) => {
         if (err) return reject(err);
         resolve({ serial, pin });

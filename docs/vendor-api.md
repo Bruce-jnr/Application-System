@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Vendor API allows authorized vendors to generate vouchers for the admission system. Each voucher costs GH₵360.00.
+The Vendor API allows authorized vendors to generate vouchers for the admission system. Voucher price is configurable by an admin.
 
 ## Authentication
 
@@ -20,7 +20,7 @@ https://nsacoe.edu.gh/api/vendor
 ## Endpoints
 
 ### Generate Voucher
-Generate a new voucher with a unique serial number and PIN. Each voucher costs GH₵360.00.
+Generate a new voucher with a unique serial number and PIN. Voucher price is returned in the response.
 
 **Endpoint:** `POST /vouchers/generate`
 
@@ -48,7 +48,7 @@ Generate a new voucher with a unique serial number and PIN. Each voucher costs G
 }
 ```
 
-**Note:** The price is fixed at GH₵360.00 per voucher and cannot be modified.
+**Note:** The voucher price is managed by the admin dashboard.
 
 ## Error Handling
 

@@ -108,6 +108,24 @@ async function testDatabaseConnection() {
   }
 }
 
+async function ensureAppSettings() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      \`key\` VARCHAR(100) PRIMARY KEY,
+      \`value\` VARCHAR(255) NOT NULL,
+      updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  const defaultVoucherPrice = String(process.env.DEFAULT_VOUCHER_PRICE || '360.00');
+  await pool.query(
+    `INSERT INTO app_settings (\`key\`, \`value\`)
+     VALUES ('voucher_price', ?)
+     ON DUPLICATE KEY UPDATE \`value\` = \`value\``,
+    [defaultVoucherPrice]
+  );
+}
+
 // Session store
 const sessionStore = new MySQLStore(
   {
@@ -805,6 +823,10 @@ app.get('/admin/dashboard', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
 });
 
+app.get('/admin/settings', isAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin-settings.html'));
+});
+
 app.get('/admin/vouchers', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
@@ -945,18 +967,6 @@ app.get('/api/admin/vouchers/statistics', isAdmin, async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// 404 handler - must be after all other routes
-app.use((req, res) => {
-  logger.info('404 Not Found:', req.path);
-  res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-});
-
 // Health endpoint for liveness checks
 app.get('/health', async (req, res) => {
   try {
@@ -969,11 +979,24 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 handler - must be after all other routes
+app.use((req, res) => {
+  logger.info('404 Not Found:', req.path);
+  res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+});
+
 // Initialize database before starting the server
 async function startServer() {
   try {
     // Test database connection first
     await testDatabaseConnection();
+    await ensureAppSettings();
 
     // Check if we should force reinitialize the database
     const forceInit = process.env.FORCE_DB_INIT === 'true';
