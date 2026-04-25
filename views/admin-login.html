@@ -150,7 +150,8 @@
               Object.fromEntries(response.headers.entries())
             );
 
-            if (!response.ok) {
+            // Allow 400 or 401 status to pass through to read error message
+            if (!response.ok && response.status !== 400 && response.status !== 401 && response.status !== 404) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -162,7 +163,8 @@
               console.log('Login successful, redirecting to admin...');
               window.location.href = '/admin/dashboard';
             } else {
-              alert('Login failed: ' + data.message);
+              // Now accurately detects and alerts data.message instead of breaking
+              alert(data.message || 'Login failed!');
             }
           } catch (error) {
             console.error('Login error:', error);
