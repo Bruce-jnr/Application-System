@@ -14,9 +14,13 @@ function showAlert(type, message) {
 }
 
 async function fetchJson(url, options) {
+  const token = localStorage.getItem('admin_token');
   const res = await fetch(url, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers || {}),
+    },
     ...options,
   });
 
@@ -147,11 +151,8 @@ async function loadApiKeysForSelectedVendor() {
 
 async function handleLogout() {
   try {
-    const res = await fetch('/api/admin/logout', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    localStorage.removeItem('admin_token');
+    const res = await fetch('/api/admin/logout', { method: 'POST' });
     if (res.ok) window.location.href = '/admin-login';
     else showAlert('danger', 'Logout failed');
   } catch (e) {
@@ -160,6 +161,10 @@ async function handleLogout() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (!localStorage.getItem('admin_token')) {
+    window.location.href = '/admin-login';
+    return;
+  }
   try {
     await loadVoucherPrice();
     await loadVendors();

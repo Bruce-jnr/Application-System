@@ -1,23 +1,32 @@
-// Check admin session on page load
+function getAdminToken() {
+    return localStorage.getItem('admin_token');
+}
+
+async function adminFetch(url, options = {}) {
+    const token = getAdminToken();
+    if (!token) {
+        window.location.href = '/admin-login';
+        throw new Error('Missing admin token');
+    }
+    const headers = {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+    };
+    return fetch(url, { ...options, headers });
+}
+
+// Check admin token on page load
 async function checkAdminSession() {
     try {
-        console.log('Checking admin session...');
-        const response = await fetch('/api/admin/check-session', {
-            method: 'GET',
-            credentials: 'include' // Important: include credentials
-        });
-        
+        const response = await adminFetch('/api/admin/me', { method: 'GET' });
         const data = await response.json();
-        console.log('Session check response:', data);
-        
-        if (!data.isAdmin) {
-            console.log('Not an admin user, redirecting to login');
+        if (!data.success) {
             window.location.href = '/admin-login';
             return false;
         }
         return true;
     } catch (error) {
-        console.error('Error checking admin session:', error);
+        console.error('Error checking admin auth:', error);
         window.location.href = '/admin-login';
         return false;
     }
@@ -35,12 +44,11 @@ async function generateVouchers(count) {
             return;
         }
 
-        const response = await fetch('/api/admin/vouchers/generate', {
+        const response = await adminFetch('/api/admin/vouchers/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include',
             body: JSON.stringify({ count })
         });
 
@@ -102,9 +110,7 @@ async function generateVouchers(count) {
 // Load vouchers list
 async function loadVouchers() {
     try {
-        const response = await fetch('/api/admin/vouchers', {
-            credentials: 'include'
-        });
+        const response = await adminFetch('/api/admin/vouchers', {});
         const data = await response.json();
         
         if (data.success) {
@@ -259,9 +265,8 @@ async function handleGenerateVoucher() {
 // Handle logout
 async function handleLogout() {
     try {
-        const response = await fetch('/api/admin/logout', {
-            method: 'POST'
-        });
+        localStorage.removeItem('admin_token');
+        const response = await fetch('/api/admin/logout', { method: 'POST' });
         const data = await response.json();
 
         if (data.success) {

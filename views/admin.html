@@ -114,7 +114,7 @@
               <a class="nav-link" href="/admin/dashboard">Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="/admin">Vouchers</a>
+              <a class="nav-link active" href="/admin/vouchers">Vouchers</a>
             </li>
 
             <li class="nav-item">
@@ -303,7 +303,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // Always use same-origin API calls to avoid cookie/CORS edge-cases.
+      function getAdminToken() {
+        return localStorage.getItem('admin_token');
+      }
+
       function getApiBaseUrl() {
         return window.location.origin;
       }
@@ -311,27 +314,15 @@
       // Check admin session
       async function checkAdminSession() {
         try {
-          const apiUrl = getApiBaseUrl() + '/api/admin/check-session';
-          console.log('Checking session at:', apiUrl);
-
-          let response;
-          try {
-            response = await fetch(apiUrl, {
-              credentials: 'include',
-            });
-          } catch (fetchError) {
-            console.log(
-              'Cross-domain session check failed, trying same-domain:',
-              fetchError
-            );
-            // Fallback to same-domain API call
-            const fallbackUrl =
-              window.location.origin + '/api/admin/check-session';
-            console.log('Trying fallback session check URL:', fallbackUrl);
-            response = await fetch(fallbackUrl, {
-              credentials: 'include',
-            });
+          const token = getAdminToken();
+          if (!token) {
+            window.location.href = '/admin-login';
+            return false;
           }
+          const apiUrl = getApiBaseUrl() + '/api/admin/me';
+          const response = await fetch(apiUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
           console.log('Session check response status:', response.status);
 
@@ -343,12 +334,6 @@
 
           const data = await response.json();
           console.log('Session check data:', data);
-
-          if (!data.isAdmin) {
-            console.log('Not admin, redirecting to login');
-            window.location.href = '/admin-login';
-            return false;
-          }
 
           console.log('Session check passed');
           return true;
@@ -388,14 +373,15 @@
           // Hide the confirmation modal
           confirmModal.hide();
 
+          const token = getAdminToken();
           const response = await fetch(
             getApiBaseUrl() + '/api/admin/generate-voucher',
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
               },
-              credentials: 'include', // Add this to include session cookies
             }
           );
 
@@ -433,10 +419,11 @@
       // Load vouchers list
       async function loadVouchers() {
         try {
+          const token = getAdminToken();
           const response = await fetch(
             getApiBaseUrl() + '/api/admin/vouchers',
             {
-              credentials: 'include',
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
           const data = await response.json();
@@ -461,10 +448,11 @@
       // Load voucher statistics
       async function loadVoucherStats() {
         try {
+          const token = getAdminToken();
           const response = await fetch(
             getApiBaseUrl() + '/api/admin/vouchers/statistics',
             {
-              credentials: 'include',
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
           const data = await response.json();
@@ -539,9 +527,11 @@
         .addEventListener('click', printVoucher);
 
       // Initial load
-      checkAdminSession();
-      loadVouchers();
-      loadVoucherStats();
+      checkAdminSession().then((ok) => {
+        if (!ok) return;
+        loadVouchers();
+        loadVoucherStats();
+      });
 
 
 
@@ -549,12 +539,9 @@
       // Add logout functionality
       async function handleLogout() {
         try {
+          localStorage.removeItem('admin_token');
           const response = await fetch(getApiBaseUrl() + '/api/admin/logout', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
           });
 
           if (response.ok) {

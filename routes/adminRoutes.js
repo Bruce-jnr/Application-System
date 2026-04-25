@@ -4,11 +4,13 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const smsService = require('../utils/smsService');
 const path = require('path');
-const { isAdmin } = require('../middleware/auth');
+// Session-based isAdmin is deprecated for admin APIs; JWT is used instead.
 const { createObjectCsvWriter } = require('csv-writer');
 const fs = require('fs');
 const pool = require('../config/db');
 const multer = require('multer');
+const jwt = require('jsonwebtoken');
+const adminJwtAuth = require('../middleware/adminJwtAuth');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -58,54 +60,24 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Set admin session and ensure it is saved before responding
-    req.session.adminId = admin.id;
-    req.session.isAdmin = true;
-    req.session.username = admin.username;
-    req.session.userType = 'admin';
+    const token = jwt.sign(
+      {
+        adminId: admin.id,
+        username: admin.username,
+        userType: 'admin',
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.ADMIN_JWT_EXPIRES_IN || '12h' }
+    );
 
-    // Force session save and regenerate session ID for security
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error('Session regeneration error:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to establish session',
-        });
-      }
-
-      // Set session data again after regeneration
-      req.session.adminId = admin.id;
-      req.session.isAdmin = true;
-      req.session.username = admin.username;
-      req.session.userType = 'admin';
-
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Session save error:', saveErr);
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to establish session',
-          });
-        }
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Admin login successful:', {
-            adminId: admin.id,
-            username: admin.username,
-            sessionId: req.session.id,
-          });
-        }
-
-        res.json({
-          success: true,
-          admin: {
-            id: admin.id,
-            username: admin.username,
-            name: admin.name,
-          },
-        });
-      });
+    res.json({
+      success: true,
+      token,
+      admin: {
+        id: admin.id,
+        username: admin.username,
+        name: admin.name,
+      },
     });
   } catch (error) {
     console.error('Admin login error:', error);
@@ -123,7 +95,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Generate voucher route
-router.post('/generate-voucher', isAdmin, async (req, res) => {
+router.post('/generate-voucher', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -164,7 +136,7 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
     // Insert into database
     const [result] = await pool.query(
       'INSERT INTO vouchers (serial_number, pin_hash, created_by, price) VALUES (?, ?, ?, ?)',
-      [serialNumber, pinHash, req.session.adminId, voucherPrice]
+      [serialNumber, pinHash, req.admin.adminId, voucherPrice]
     );
 
     res.json({
@@ -186,7 +158,7 @@ router.post('/generate-voucher', isAdmin, async (req, res) => {
 });
 
 // Settings: voucher price
-router.get('/settings', isAdmin, async (req, res) => {
+router.get('/settings', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   try {
     const voucherPrice = await getVoucherPrice(pool);
@@ -196,7 +168,7 @@ router.get('/settings', isAdmin, async (req, res) => {
   }
 });
 
-router.put('/settings/voucher-price', isAdmin, async (req, res) => {
+router.put('/settings/voucher-price', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const raw = req.body?.voucher_price ?? req.body?.price;
   const parsed = Number.parseFloat(raw);
@@ -219,7 +191,7 @@ router.put('/settings/voucher-price', isAdmin, async (req, res) => {
 });
 
 // Vendors + API keys management
-router.get('/vendors', isAdmin, async (req, res) => {
+router.get('/vendors', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   try {
     const [vendors] = await pool.query(
@@ -231,7 +203,7 @@ router.get('/vendors', isAdmin, async (req, res) => {
   }
 });
 
-router.get('/vendors/:vendorId/api-keys', isAdmin, async (req, res) => {
+router.get('/vendors/:vendorId/api-keys', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const vendorId = Number.parseInt(req.params.vendorId, 10);
   if (!Number.isFinite(vendorId)) {
@@ -251,7 +223,7 @@ router.get('/vendors/:vendorId/api-keys', isAdmin, async (req, res) => {
   }
 });
 
-router.patch('/api-keys/:keyId', isAdmin, async (req, res) => {
+router.patch('/api-keys/:keyId', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const keyId = Number.parseInt(req.params.keyId, 10);
   const isActive = req.body?.is_active;
@@ -275,8 +247,18 @@ router.patch('/api-keys/:keyId', isAdmin, async (req, res) => {
   }
 });
 
+// Token-based "who am I" helper
+router.get('/me', adminJwtAuth, async (req, res) => {
+  res.json({ success: true, admin: { id: req.admin.adminId, username: req.admin.username } });
+});
+
+// JWT logout is client-side; keep endpoint for compatibility
+router.post('/logout', async (req, res) => {
+  res.json({ success: true });
+});
+
 // Get all vouchers route
-router.get('/vouchers', isAdmin, async (req, res) => {
+router.get('/vouchers', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -315,7 +297,7 @@ router.get('/vouchers', isAdmin, async (req, res) => {
 });
 
 // Get voucher statistics
-router.get('/vouchers/statistics', isAdmin, async (req, res) => {
+router.get('/vouchers/statistics', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -341,7 +323,7 @@ router.get('/vouchers/statistics', isAdmin, async (req, res) => {
 });
 
 // Get application statistics
-router.get('/statistics', isAdmin, async (req, res) => {
+router.get('/statistics', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -390,7 +372,7 @@ router.get('/statistics', isAdmin, async (req, res) => {
 });
 
 // Get all applications with pagination and filters
-router.get('/applications', isAdmin, async (req, res) => {
+router.get('/applications', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -448,8 +430,6 @@ router.get('/applications', isAdmin, async (req, res) => {
       [...params, limit, offset]
     );
 
-    console.log('Fetched applications:', applications);
-
     res.json({
       success: true,
       applications: applications,
@@ -470,15 +450,7 @@ router.get('/applications', isAdmin, async (req, res) => {
 });
 
 // Export applications to CSV - MOVED BEFORE /applications/:id
-router.get('/applications/export', isAdmin, async (req, res) => {
-  console.log('Export route accessed:', {
-    session: req.session,
-    isAdmin: req.session.isAdmin,
-    adminId: req.session.adminId,
-    query: req.query,
-    headers: req.headers,
-  });
-
+router.get('/applications/export', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -508,11 +480,6 @@ router.get('/applications/export', isAdmin, async (req, res) => {
       params.push(req.query.dateTo);
     }
 
-    console.log('Export query:', {
-      whereClause,
-      params,
-    });
-
     // Get all applications without pagination - only selected fields
     const [applications] = await pool.query(
       `SELECT 
@@ -530,11 +497,6 @@ router.get('/applications/export', isAdmin, async (req, res) => {
       ORDER BY a.created_at DESC`,
       params
     );
-
-    console.log('Export query results:', {
-      count: applications.length,
-      firstRecord: applications[0],
-    });
 
     // Create a temporary file path
     const tempFilePath = path.join(
@@ -575,11 +537,6 @@ router.get('/applications/export', isAdmin, async (req, res) => {
       created_at: new Date(app.created_at).toLocaleDateString('en-GB'),
     }));
 
-    console.log('CSV records prepared:', {
-      count: records.length,
-      firstRecord: records[0],
-    });
-
     // Write to CSV file
     await csvWriter.writeRecords(records);
 
@@ -611,12 +568,11 @@ router.get('/applications/export', isAdmin, async (req, res) => {
 });
 
 // Get single application details - MOVED AFTER /applications/export
-router.get('/applications/:id', isAdmin, async (req, res) => {
+router.get('/applications/:id', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const connection = await pool.getConnection();
 
   try {
-    console.log('Fetching application details for ID:', req.params.id);
 
     // Get application details with all related information except documents
     const [applications] = await connection.query(
@@ -782,7 +738,7 @@ router.get('/applications/:id', isAdmin, async (req, res) => {
 });
 
 // Approve application
-router.post('/applications/:id/approve', isAdmin, async (req, res) => {
+router.post('/applications/:id/approve', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const connection = await pool.getConnection();
 
@@ -864,7 +820,7 @@ router.post('/applications/:id/approve', isAdmin, async (req, res) => {
 });
 
 // Reject application
-router.post('/applications/:id/reject', isAdmin, async (req, res) => {
+router.post('/applications/:id/reject', adminJwtAuth, async (req, res) => {
   const pool = req.app.get('mysqlPool');
   const connection = await pool.getConnection();
 
@@ -931,22 +887,8 @@ router.post('/applications/:id/reject', isAdmin, async (req, res) => {
   }
 });
 
-// Update the logout route path
-router.post('/logout', isAdmin, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
-      return res.status(500).json({
-        success: false,
-        message: 'Error logging out',
-      });
-    }
-    res.json({ success: true });
-  });
-});
-
 // Add route to check SMS balance
-router.get('/sms/balance', isAdmin, async (req, res) => {
+router.get('/sms/balance', adminJwtAuth, async (req, res) => {
   try {
     const result = await smsService.checkBalance();
     if (result.success) {
@@ -970,7 +912,7 @@ router.get('/sms/balance', isAdmin, async (req, res) => {
 });
 
 // Add route to check message status
-router.get('/sms/status/:messageId', isAdmin, async (req, res) => {
+router.get('/sms/status/:messageId', adminJwtAuth, async (req, res) => {
   try {
     const { messageId } = req.params;
     const result = await smsService.checkMessageStatus(messageId);
@@ -995,14 +937,14 @@ router.get('/sms/status/:messageId', isAdmin, async (req, res) => {
 });
 
 // Application preview page route
-router.get('/application-preview/:id', isAdmin, (req, res) => {
+router.get('/application-preview/:id', adminJwtAuth, (req, res) => {
   res.sendFile(
     path.join(__dirname, '..', 'views', 'admin-application-preview.html')
   );
 });
 
 // Temporary: admin-only SMS test endpoint
-router.post('/sms/test', isAdmin, async (req, res) => {
+router.post('/sms/test', adminJwtAuth, async (req, res) => {
   try {
     const { phone, message } = req.body || {};
 
@@ -1034,7 +976,7 @@ router.post('/sms/test', isAdmin, async (req, res) => {
 
 module.exports = router;
 // Admin: CRUD for news with image upload (stored in DB)
-router.post('/news', isAdmin, upload.single('image'), async (req, res) => {
+router.post('/news', adminJwtAuth, upload.single('image'), async (req, res) => {
   try {
     const {
       title,
@@ -1068,7 +1010,7 @@ router.post('/news', isAdmin, upload.single('image'), async (req, res) => {
   }
 });
 
-router.put('/news/:id', isAdmin, upload.single('image'), async (req, res) => {
+router.put('/news/:id', adminJwtAuth, upload.single('image'), async (req, res) => {
   try {
     const {
       title,
@@ -1115,7 +1057,7 @@ router.put('/news/:id', isAdmin, upload.single('image'), async (req, res) => {
   }
 });
 
-router.delete('/news/:id', isAdmin, async (req, res) => {
+router.delete('/news/:id', adminJwtAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM news WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -1127,7 +1069,7 @@ router.delete('/news/:id', isAdmin, async (req, res) => {
 
 
 // Admin: CRUD for news
-router.post('/news', isAdmin, async (req, res) => {
+router.post('/news', adminJwtAuth, async (req, res) => {
   try {
     const {
       title,
@@ -1156,7 +1098,7 @@ router.post('/news', isAdmin, async (req, res) => {
   }
 });
 
-router.put('/news/:id', isAdmin, async (req, res) => {
+router.put('/news/:id', adminJwtAuth, async (req, res) => {
   try {
     const {
       title,
@@ -1186,7 +1128,7 @@ router.put('/news/:id', isAdmin, async (req, res) => {
   }
 });
 
-router.delete('/news/:id', isAdmin, async (req, res) => {
+router.delete('/news/:id', adminJwtAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM news WHERE id = ?', [req.params.id]);
     res.json({ success: true });

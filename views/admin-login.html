@@ -68,6 +68,10 @@
           console.log('Basic connectivity test failed:', error);
         });
 
+      function setAdminToken(token) {
+        localStorage.setItem('admin_token', token);
+      }
+
       document
         .getElementById('loginForm')
         .addEventListener('submit', async (e) => {
@@ -154,8 +158,9 @@
             console.log('Login response data:', data);
 
             if (data.success) {
+              if (data.token) setAdminToken(data.token);
               console.log('Login successful, redirecting to admin...');
-              window.location.href = '/admin';
+              window.location.href = '/admin/dashboard';
             } else {
               alert('Login failed: ' + data.message);
             }

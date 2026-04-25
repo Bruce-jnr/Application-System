@@ -21,6 +21,11 @@ if (typeof bootstrap === 'undefined') {
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function () {
+  // Redirect to login if token missing
+  if (!getAdminToken()) {
+    window.location.href = '/admin-login';
+    return;
+  }
   // Load initial data
   loadDashboardStats();
   loadApplications();
@@ -42,10 +47,23 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 });
 
+function getAdminToken() {
+  return localStorage.getItem('admin_token');
+}
+
+async function adminFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: `Bearer ${token}`,
+  };
+  return fetch(url, { ...options, headers });
+}
+
 // Load dashboard statistics
 async function loadDashboardStats() {
   try {
-    const response = await fetch('/api/admin/statistics');
+    const response = await adminFetch('/api/admin/statistics');
     const data = await response.json();
 
     if (data.success) {
@@ -86,7 +104,7 @@ async function loadApplications(page = 1) {
 
     console.log('Fetching applications with params:', params.toString());
 
-    const response = await fetch(
+    const response = await adminFetch(
       `/api/admin/applications?${params.toString()}`
     );
     const data = await response.json();
@@ -900,7 +918,7 @@ function formatDate(dateString) {
 // Add print functionality
 async function printApplication(id) {
   try {
-    const response = await fetch(`/api/admin/applications/${id}`);
+    const response = await adminFetch(`/api/admin/applications/${id}`);
     const data = await response.json();
 
     if (!data.success) {
@@ -1093,10 +1111,10 @@ function handleFilterChange() {
 async function handleExport() {
   try {
     const queryParams = new URLSearchParams(currentFilters);
-    const response = await fetch(
+    const response = await adminFetch(
       `/api/admin/applications/export?${queryParams}`,
       {
-        credentials: 'include'
+        // Authorization header injected by adminFetch
       }
     );
 
@@ -1146,12 +1164,8 @@ function showAlert(type, message) {
 // Handle logout
 async function handleLogout() {
   try {
-    const response = await fetch('/api/admin/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    localStorage.removeItem('admin_token');
+    const response = await fetch('/api/admin/logout', { method: 'POST' });
 
     if (!response.ok) {
       throw new Error('Logout failed');

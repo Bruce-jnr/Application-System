@@ -798,38 +798,20 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Admin route accessed:', {
-      session: req.session,
-      isAdmin: req.session.isAdmin,
-      adminId: req.session.adminId,
-      sessionId: req.session.id,
-    });
-  }
-
-  if (!req.session.isAdmin) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Not admin, redirecting to login');
-    }
-    return res.redirect('/admin-login');
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Admin access granted');
-  }
-  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+  // Admin UI is token-based (JWT) now; do not rely on server sessions here.
+  res.redirect('/admin/vouchers');
 });
 
 // Add route for admin dashboard
-app.get('/admin/dashboard', isAdmin, (req, res) => {
+app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
 });
 
-app.get('/admin/settings', isAdmin, (req, res) => {
+app.get('/admin/settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-settings.html'));
 });
 
-app.get('/admin/vouchers', isAdmin, (req, res) => {
+app.get('/admin/vouchers', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
@@ -1070,22 +1052,6 @@ app.post('/api/auth/login', async (req, res) => {
       message: err.message || 'Server error during login',
     });
   }
-});
-
-// Add admin logout route
-app.all('/api/admin/logout', (req, res) => {
-  req.session.isAdmin = false;
-  req.session.destroy((err) => {
-    if (err) {
-      logger.error('Logout error:', err);
-      return res.status(500).json({ error: 'Failed to logout' });
-    }
-    if (req.xhr || req.headers.accept.includes('application/json')) {
-      res.json({ success: true });
-    } else {
-      res.redirect('/admin-login');
-    }
-  });
 });
 
 // Function to generate a serial number
