@@ -433,6 +433,7 @@ app.post(
           idType,
           idNumber,
           howHeard,
+          refereeName,
           questions,
           agreeTerms,
           agreePolicy,
@@ -475,8 +476,8 @@ app.post(
           (voucher_id, title, first_name, middle_name, last_name, date_of_birth, gender, place_of_birth, birth_region, nationality, 
           residence_address, address, city, residence_region, residence_district, country, 
           gps_code, phone_number, phone_number2, email, religion, disability_status, id_type, id_number, 
-          how_heard, questions, agreed_to_terms, agreed_to_policy)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          how_heard, referee_name, questions, agreed_to_terms, agreed_to_policy)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             req.session.voucherId,
             title || null,
@@ -503,6 +504,7 @@ app.post(
             idType || null,
             idNumber || null,
             howHeard || null,
+            refereeName || null,
             questions || null,
             agreeTerms ? 1 : 0,
             agreePolicy ? 1 : 0,

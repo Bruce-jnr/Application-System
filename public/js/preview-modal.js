@@ -396,8 +396,23 @@ class ApplicationPreview {
     }
 
     async submitApplication() {
+        const submitBtn = document.getElementById('submitApplicationBtn');
+        const originalText = submitBtn ? submitBtn.innerText : 'Submit Application';
+        
         try {
             console.log('Submitting application');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Submitting...';
+            }
+            
+            // Show Loader Overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'submissionLoaderOverlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;justify-content:center;align-items:center;flex-direction:column;color:white;font-family:sans-serif;';
+            overlay.innerHTML = '<div style="width:50px;height:50px;border:5px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div><p style="margin-top:15px;font-size:1.2rem;">Submitting Application...</p><style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>';
+            document.body.appendChild(overlay);
+
             const form = document.getElementById('admissionForm');
             const formData = new FormData(form);
             
@@ -409,12 +424,24 @@ class ApplicationPreview {
             const result = await response.json();
 
             if (result.success) {
-
-                window.location.href = '/application-success';
+                // Keep loader visible on success during redirect
+                window.location.href = result.redirectUrl || '/application-success';
             } else {
+                const loader = document.getElementById('submissionLoaderOverlay');
+                if (loader) loader.remove();
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalText;
+                }
                 alert('Failed to submit application: ' + result.message);
             }
         } catch (error) {
+            const loader = document.getElementById('submissionLoaderOverlay');
+            if (loader) loader.remove();
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            }
             console.error('Error submitting application:', error);
             alert('An error occurred while submitting your application. Please try again.');
         }

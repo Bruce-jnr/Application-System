@@ -121,6 +121,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (progressBar) progressBar.style.width = progress + '%';
   }
 
+  // Handle referral toggle
+  const hearAbout = document.getElementById('hearAbout');
+  const referralGroup = document.getElementById('referralGroup');
+  const refereeName = document.getElementById('refereeName');
+  
+  if (hearAbout && referralGroup && refereeName) {
+    hearAbout.addEventListener('change', function() {
+      if (this.value === 'Referral') {
+        referralGroup.style.display = 'block';
+        refereeName.setAttribute('required', 'required');
+      } else {
+        referralGroup.style.display = 'none';
+        refereeName.removeAttribute('required');
+        refereeName.value = '';
+      }
+    });
+  }
+
   // Initialize progress bar
   updateProgress();
 });

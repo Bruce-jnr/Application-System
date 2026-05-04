@@ -126,6 +126,7 @@ async function initializeDatabase() {
         id_document_path VARCHAR(255),
         photo_path VARCHAR(255),
         how_heard VARCHAR(100),
+        referee_name VARCHAR(100),
         questions TEXT,
         agreed_to_terms BOOLEAN,
         agreed_to_policy BOOLEAN,
