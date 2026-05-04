@@ -48,7 +48,7 @@ class SmsService {
 
     // Template for payment confirmation message
     getPaymentConfirmationMessage(applicantName, amount, reference) {
-        return `Dear ${applicantName},\n\nPayment of GHS ${amount} has been received. Reference: ${reference}. Thank you for your payment.\n\nBest regards,\nNSA CoE Admissions Team`;
+        return `Dear ${applicantName},\n\nPayment of GHS ${amount} has been received. Reference: ${reference}. Thank you for your payment.\n\nBest regards,\nNSACoE Admissions Team`;
     }
 }
 

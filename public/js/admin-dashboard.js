@@ -898,7 +898,8 @@ function formatSubjectsWithIndex(subjects, indexNumbers, grades) {
 async function viewApplication(id) {
   try {
     // Update the URL to use the correct format for preview
-    window.location.href = `/api/admin/application-preview/${id}`;
+    const token = getAdminToken();
+    window.location.href = `/api/admin/application-preview/${id}?token=${token}`;
   } catch (error) {
     console.error('Error:', error);
     showAlert('danger', `Error loading application details: ${error.message}`);
@@ -1042,7 +1043,7 @@ function approveApplication(id) {
   showConfirmDialog(
     'Are you sure you want to approve this application?',
     () => {
-      fetch(`/api/admin/applications/${id}/approve`, {
+      adminFetch(`/api/admin/applications/${id}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1075,7 +1076,7 @@ async function rejectApplication(id) {
   if (!confirm('Are you sure you want to reject this application?')) return;
 
   try {
-    const response = await fetch(`/api/admin/applications/${id}/reject`, {
+    const response = await adminFetch(`/api/admin/applications/${id}/reject`, {
       method: 'POST',
     });
     const data = await response.json();

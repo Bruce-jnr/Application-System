@@ -4,6 +4,7 @@ function getTokenFromReq(req) {
   const auth = req.headers.authorization || '';
   const [scheme, token] = auth.split(' ');
   if (scheme && scheme.toLowerCase() === 'bearer' && token) return token;
+  if (req.query && req.query.token) return req.query.token;
   return null;
 }
 

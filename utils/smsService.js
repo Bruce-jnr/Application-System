@@ -138,17 +138,17 @@ class SMSService {
 
     // Template for application received notification
     getApplicationReceivedMessage(applicantName, serialNumber) {
-        return `Dear ${applicantName}, Thank you for submitting your application to NSAWKAW College of Education. Your application has been received and is being processed. Your Serial Number is ${serialNumber}. You will be notified of the status of your application in due course. Best regards, NSACoE`;
+        return `Dear ${applicantName}, Thank you for submitting your application to Nsawkaw College of Education. Your application has been received and is being processed. Your Serial Number is ${serialNumber}. You will be notified of the status of your application in due course. Best regards, NSACoE`;
     }
 
     // Template for application approval notification
     getApplicationApprovedMessage(applicantName, serialNumber, pin) {
-        return `Dear ${applicantName}, Congratulations! Your application to NSAWKAW College of Education has been approved. Your Serial Number is ${serialNumber} and your Admission PIN is ${pin}. Visit ${process.env.FRONTEND_URL}/student/login to download your admission documents. Best regards, NSACoE`;
+        return `Dear ${applicantName}, Congratulations! Your application to Nsawkaw College of Education has been approved. Your Serial Number is ${serialNumber} and your Admission PIN is ${pin}. Visit ${process.env.FRONTEND_URL}/student/login to download your admission documents. Best regards, NSACoE`;
     }
 
     // Template for application rejection notification
     getApplicationRejectedMessage(applicantName, serialNumber) {
-        return `Dear ${applicantName}, We regret to inform you that your application to NSA College of Education has not been successful at this time. Your Serial Number is ${serialNumber}. We thank you for your interest in our institution. Best regards, NSAWKAW College of Education`;
+        return `Dear ${applicantName}, We regret to inform you that your application to Nsawkaw College of Education has not been successful at this time. Your Serial Number is ${serialNumber}. We thank you for your interest in our institution. Best regards, NSACoE`;
     }
 }
 
