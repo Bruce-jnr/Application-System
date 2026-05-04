@@ -181,7 +181,12 @@
 
                 console.log('Loading application details for ID:', id);
 
-                const response = await fetch(`/api/admin/applications/${id}`);
+                const token = localStorage.getItem('admin_token') || new URLSearchParams(window.location.search).get('token');
+                const response = await fetch(`/api/admin/applications/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
