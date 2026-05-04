@@ -704,10 +704,17 @@ app.post(
 
         // Commit the transaction
         await connection.commit();
-        res.json({
-          success: true,
-          applicantId,
-          redirectUrl: `/application-success?ref=${applicantId}`,
+        
+        // Expire the session after successful submission
+        req.session.destroy((err) => {
+          if (err) {
+            logger.error('Error destroying session after submission:', err);
+          }
+          res.json({
+            success: true,
+            applicantId,
+            redirectUrl: `/application-success?ref=${applicantId}`,
+          });
         });
       } catch (error) {
         await connection.rollback();
