@@ -408,7 +408,20 @@ app.post(
           });
         }
 
-        // Extract form data with proper field mapping
+        // Function to deeply convert string values to uppercase
+        const deepUpperCase = (val) => {
+          if (typeof val === 'string') return val.toUpperCase();
+          if (Array.isArray(val)) return val.map(deepUpperCase);
+          if (val && typeof val === 'object') {
+            const newObj = {};
+            for (const key in val) newObj[key] = deepUpperCase(val[key]);
+            return newObj;
+          }
+          return val;
+        };
+        
+        // Extract form data with proper field mapping after converting all to uppercase
+        const upperBody = deepUpperCase(req.body);
         const {
           title,
           firstName,
@@ -461,7 +474,7 @@ app.post(
           emergencyRelation,
           // Languages
           languages,
-        } = req.body;
+        } = upperBody;
 
         // Handle phone array - extract first phone number
         const phoneNumber = Array.isArray(phone)

@@ -283,7 +283,7 @@
 
     /* Set page margins */
     @page {
-        margin: 1cm;
+        margin: 0.5in;
         size: A4;
     }
 
