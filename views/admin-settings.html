@@ -126,6 +126,34 @@
             </div>
           </div>
         </div>
+        <div class="col-lg-6">
+          <div class="card mt-4">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Change Password</h5>
+            </div>
+            <div class="card-body">
+              <form id="changePasswordForm" class="row g-3">
+                <div class="col-12">
+                  <label for="currentPassword" class="form-label">Current Password</label>
+                  <input type="password" class="form-control" id="currentPassword" required />
+                </div>
+                <div class="col-12">
+                  <label for="newPassword" class="form-label">New Password</label>
+                  <input type="password" class="form-control" id="newPassword" required minlength="6" />
+                </div>
+                <div class="col-12">
+                  <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                  <input type="password" class="form-control" id="confirmNewPassword" required minlength="6" />
+                </div>
+                <div class="col-12 d-grid">
+                  <button class="btn btn-warning" type="submit" id="changePasswordBtn">
+                    Change Password
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 

@@ -204,6 +204,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  changePasswordForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const btn = document.getElementById('changePasswordBtn');
+
+    if (newPassword !== confirmNewPassword) {
+      showAlert('danger', 'New passwords do not match. Please try again.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showAlert('danger', 'New password must be at least 6 characters long.');
+      return;
+    }
+
+    btn.disabled = true;
+    try {
+      await fetchJson('/api/admin/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      showAlert('success', 'Password changed successfully!');
+      changePasswordForm.reset();
+    } catch (err) {
+      showAlert('danger', err.message || 'Failed to change password');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 });
 

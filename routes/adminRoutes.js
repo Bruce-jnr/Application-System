@@ -247,6 +247,54 @@ router.patch('/api-keys/:keyId', adminJwtAuth, async (req, res) => {
   }
 });
 
+// Change admin password
+router.post('/change-password', adminJwtAuth, async (req, res) => {
+  const pool = req.app.get('mysqlPool');
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current and new passwords are required' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters long' });
+  }
+
+  try {
+    const adminId = req.admin.adminId;
+    
+    // Fetch the admin's current password hash
+    const [users] = await pool.query(
+      'SELECT password_hash FROM users WHERE id = ? AND user_type = "admin"',
+      [adminId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'Admin user not found' });
+    }
+
+    const passwordMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: 'Incorrect current password' });
+    }
+
+    // Hash the new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update the password in the database
+    await pool.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newPasswordHash, adminId]
+    );
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to change password' });
+  }
+});
+
 // Token-based "who am I" helper
 router.get('/me', adminJwtAuth, async (req, res) => {
   res.json({ success: true, admin: { id: req.admin.adminId, username: req.admin.username } });
