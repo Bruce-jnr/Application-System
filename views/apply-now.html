@@ -403,11 +403,23 @@
     <!-- Academic Information Section -->
     <div class="form-section" id="section3">
         <h3>Academic Performance</h3>
-        
+
+        <!-- Same Index Number Helper -->
+        <div class="form-group" style="background:#f0f7ff; border:1px solid #b3d1f7; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div class="checkbox-group" style="margin-bottom:8px;">
+                <input type="checkbox" id="sameIndexCheck">
+                <label for="sameIndexCheck" style="font-weight:600;">My index number is the same for all subjects</label>
+            </div>
+            <div id="masterIndexWrapper" style="display:none;">
+                <label for="masterIndexInput" style="font-size:0.9rem;">Enter your index number once — it will fill all courses automatically</label>
+                <input type="text" id="masterIndexInput" class="form-control" placeholder="Ex: 0123456789" style="max-width:320px; margin-top:4px;">
+            </div>
+        </div>
+
         <!-- Core Subjects -->
         <div class="subject-group">
             <h4>Core Subjects (Mandatory)</h4>
-            
+
             <div class="subject-row">
                 <div class="form-group">
                     <label>English Language</label>

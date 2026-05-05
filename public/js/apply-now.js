@@ -219,7 +219,59 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
 
     electiveContainer.appendChild(newRow);
+
+    // If same-index is active, fill the new row's index input too
+    const sameIndexCheck = document.getElementById('sameIndexCheck');
+    const masterIndexInput = document.getElementById('masterIndexInput');
+    if (sameIndexCheck && sameIndexCheck.checked && masterIndexInput.value) {
+      const newIndexInput = newRow.querySelector('input[name="electiveIndexNumbers[]"]');
+      if (newIndexInput) newIndexInput.value = masterIndexInput.value;
+    }
   });
+
+  // ---- Same Index Number autofill logic ----
+  const sameIndexCheck = document.getElementById('sameIndexCheck');
+  const masterIndexWrapper = document.getElementById('masterIndexWrapper');
+  const masterIndexInput = document.getElementById('masterIndexInput');
+
+  function getAllIndexInputs() {
+    return document.querySelectorAll('input[name="coreIndexNumbers[]"], input[name="electiveIndexNumbers[]"]');
+  }
+
+  function applyMasterIndex(value) {
+    getAllIndexInputs().forEach(input => {
+      input.value = value;
+      input.readOnly = true;
+    });
+  }
+
+  function clearMasterIndex() {
+    getAllIndexInputs().forEach(input => {
+      input.value = '';
+      input.readOnly = false;
+    });
+  }
+
+  if (sameIndexCheck) {
+    sameIndexCheck.addEventListener('change', function () {
+      if (this.checked) {
+        masterIndexWrapper.style.display = 'block';
+        masterIndexInput.focus();
+        if (masterIndexInput.value) applyMasterIndex(masterIndexInput.value);
+      } else {
+        masterIndexWrapper.style.display = 'none';
+        clearMasterIndex();
+      }
+    });
+  }
+
+  if (masterIndexInput) {
+    masterIndexInput.addEventListener('input', function () {
+      if (sameIndexCheck && sameIndexCheck.checked) {
+        applyMasterIndex(this.value);
+      }
+    });
+  }
 
   // Validate index number format
   document.addEventListener(
