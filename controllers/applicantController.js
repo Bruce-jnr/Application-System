@@ -1,5 +1,5 @@
 const Applicant = require('../models/applicant');
-const smsService = require('../services/smsService');
+const smsService = require('../utils/smsService');
 
 exports.submitApplication = async (req, res) => {
     try {
@@ -14,7 +14,7 @@ exports.submitApplication = async (req, res) => {
             applicant.applicationId
         );
         
-        const smsResult = await smsService.sendSms(applicant.phoneNumber, message);
+        const smsResult = await smsService.sendSMS(applicant.phoneNumber, message);
         
         if (!smsResult.success) {
             console.error('Failed to send SMS:', smsResult.error);

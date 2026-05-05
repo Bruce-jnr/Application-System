@@ -150,6 +150,16 @@ class SMSService {
     getApplicationRejectedMessage(applicantName, serialNumber) {
         return `Dear ${applicantName}, We regret to inform you that your application to Nsawkaw College of Education has not been successful at this time. Your Serial Number is ${serialNumber}. We thank you for your interest in our institution. Best regards, NSACoE`;
     }
+
+    // Template for application confirmation message
+    getApplicationConfirmationMessage(applicantName, applicationId) {
+        return `Dear ${applicantName},\n\nThank you for submitting your application to Nsawkaw College of Education. Your application ID is ${applicationId}. We will review your application and contact you soon.\n\nBest regards,\nNSACoE Admissions Team`;
+    }
+
+    // Template for payment confirmation message
+    getPaymentConfirmationMessage(applicantName, amount, reference) {
+        return `Dear ${applicantName},\n\nPayment of GHS ${amount} has been received. Reference: ${reference}. Thank you for your payment.\n\nBest regards,\nNSACoE Admissions Team`;
+    }
 }
 
 // Create a single instance of SMSService

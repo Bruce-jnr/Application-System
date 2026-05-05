@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const smsService = require('../services/smsService');
+const smsService = require('../utils/smsService');
 const pool = require('../config/db');
 
 // Test SMS endpoint
@@ -16,7 +16,7 @@ router.post('/test-sms', async (req, res) => {
         }
 
         const message = 'This is a test message from NSA CoE Admissions System.';
-        const result = await smsService.sendSms(phoneNumber, message);
+        const result = await smsService.sendSMS(phoneNumber, message);
 
         res.json({
             success: true,
