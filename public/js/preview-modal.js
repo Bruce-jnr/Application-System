@@ -342,6 +342,19 @@ class ApplicationPreview {
                         </div>
                     </div>
 
+                    <div class="preview-section" style="border: none; display: none;" id="signature-block">
+                        <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+                            <div style="text-align: center; width: 40%;">
+                                <div style="border-bottom: 1px solid #000; height: 30px; margin-bottom: 10px;"></div>
+                                <label style="font-weight: bold; color: black;">Applicant's Signature</label>
+                            </div>
+                            <div style="text-align: center; width: 40%;">
+                                <div style="border-bottom: 1px solid #000; height: 30px; margin-bottom: 10px;"></div>
+                                <label style="font-weight: bold; color: black;">Date</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="preview-actions">
                         <button type="button" class="btn btn-secondary" id="backToEditBtn">Back to Edit</button>
                         <button type="button" class="btn btn-info" id="printPreviewBtn">Print Preview</button>
