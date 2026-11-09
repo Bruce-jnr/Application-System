@@ -74,6 +74,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.ADMIN_JWT_EXPIRES_IN || '12h' }
     );
 
+    // HTML pages use the session; dashboard API calls use the JWT.
+    await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
+    req.session.isAdmin = true;
+    req.session.adminId = admin.id;
+    req.session.username = admin.username;
+    await new Promise((resolve, reject) => req.session.save((error) => error ? reject(error) : resolve()));
+
     res.json({
       success: true,
       token,
@@ -304,8 +311,16 @@ router.get('/me', adminJwtAuth, async (req, res) => {
   res.json({ success: true, admin: { id: req.admin.adminId, username: req.admin.username } });
 });
 
-// JWT logout is client-side; keep endpoint for compatibility
+// The browser removes its JWT; also end the session used by HTML page guards.
 router.post('/logout', async (req, res) => {
+  if (req.session) {
+    try {
+      await new Promise((resolve, reject) => req.session.destroy((error) => error ? reject(error) : resolve()));
+    } catch (error) {
+      console.error('Admin logout error:', error);
+      return res.status(500).json({ success: false, message: 'Failed to log out' });
+    }
+  }
   res.json({ success: true });
 });
 
