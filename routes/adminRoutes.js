@@ -35,6 +35,10 @@ router.post('/login', async (req, res) => {
   });
 
   const { username, password } = req.body;
+  if (typeof username !== 'string' || typeof password !== 'string' ||
+      !username.trim() || username.length > 100 || !password || password.length > 1024) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
+  }
   const pool = req.app.get('mysqlPool');
 
   try {
@@ -128,7 +132,7 @@ router.post('/generate-voucher', adminJwtAuth, async (req, res) => {
     }
 
     // Generate PIN (6 digits)
-    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    const pin = crypto.randomInt(100000, 1000000).toString();
 
     // Hash the PIN
     const pinHash = await bcrypt.hash(pin, 10);
@@ -814,7 +818,7 @@ router.post('/applications/:id/approve', adminJwtAuth, async (req, res) => {
     }
 
     // Generate a 6-digit PIN
-    const admissionPin = Math.floor(100000 + Math.random() * 900000).toString();
+    const admissionPin = crypto.randomInt(100000, 1000000).toString();
 
     // Update application status and add approval metadata
     await connection.query(

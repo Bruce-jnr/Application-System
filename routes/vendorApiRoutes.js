@@ -4,6 +4,8 @@ const ApiKeyManager = require('../utils/apiKeyManager');
 const apiKeyAuth = require('../middleware/apiKeyAuth');
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const adminJwtAuth = require('../middleware/adminJwtAuth');
 
 async function getVoucherPrice() {
     const [rows] = await pool.query(
@@ -17,17 +19,17 @@ async function getVoucherPrice() {
 // Generate a serial number
 function generateSerialNumber() {
     const prefix = 'NSCE25';
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    const random = crypto.randomInt(0, 1000000).toString().padStart(6, '0');
     return `${prefix}${random}`;
 }
 
 // Generate a PIN
 function generatePIN() {
-    return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 }
 
 // Generate API key for vendor
-router.post('/generate-api-key', async (req, res) => {
+router.post('/generate-api-key', adminJwtAuth, async (req, res) => {
     try {
         const { vendorId } = req.body;
         

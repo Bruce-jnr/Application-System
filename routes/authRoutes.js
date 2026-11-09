@@ -17,7 +17,8 @@ router.post('/voucher-login', async (req, res) => {
     });
 
     // Validate input
-    if (!serial || !pin) {
+    if (typeof serial !== 'string' || typeof pin !== 'string' ||
+        !serial.trim() || serial.length > 64 || !pin || pin.length > 72) {
       return res.status(400).json({
         success: false,
         message: 'Serial number and PIN are required',
@@ -26,15 +27,6 @@ router.post('/voucher-login', async (req, res) => {
 
     // Format serial number to match database format (NSCE25XXXXXX)
     const formattedSerial = serial.toUpperCase().trim();
-
-    // First, let's check what vouchers exist in the database
-    const [allVouchers] = await pool.query(
-      'SELECT serial_number FROM vouchers'
-    );
-    logger.debug(
-      'All vouchers in database:',
-      allVouchers.map((v) => v.serial_number)
-    );
 
     // Now check for the specific voucher
     const [vouchers] = await pool.query(
@@ -84,6 +76,7 @@ router.post('/voucher-login', async (req, res) => {
       }
 
       // Set up applicant session
+      await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
       req.session.voucherId = voucher.id;
       req.session.serialNumber = voucher.serial_number;
       req.session.isApplicant = true;

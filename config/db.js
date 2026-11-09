@@ -9,8 +9,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  charset: 'utf8mb4',
-  collation: 'utf8mb4_unicode_ci',
+  // MySQL2 accepts the connection collation through its charset option.
+  charset: 'utf8mb4_unicode_ci',
   ...(process.env.DB_SSL === 'true' ? {
     ssl: { rejectUnauthorized: true }
   } : {})

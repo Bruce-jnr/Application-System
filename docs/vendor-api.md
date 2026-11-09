@@ -25,7 +25,7 @@ Generate a new voucher with a unique serial number and PIN. Voucher price is ret
 **Endpoint:** `POST /vouchers/generate`
 
 **Headers Required:**
-- `X-API-Key`: f6efad630bec72d9c050c6ab6e4a05d058ba4f88d9e316eb770f465b07b646a5
+- `X-API-Key`: your_api_key_here
 - `Content-Type`: application/json
 
 **Request Body:**

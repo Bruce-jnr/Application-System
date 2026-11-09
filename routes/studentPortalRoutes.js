@@ -11,6 +11,10 @@ router.get('/login', (req, res) => {
 // Student login handler
 router.post('/login', async (req, res) => {
     const { serialNumber, pin } = req.body;
+    if (typeof serialNumber !== 'string' || typeof pin !== 'string' ||
+        !serialNumber.trim() || serialNumber.length > 64 || !/^\d{6}$/.test(pin)) {
+        return res.status(400).json({ success: false, message: 'Invalid Serial Number or PIN' });
+    }
     const pool = req.app.get('mysqlPool');
 
     try {
@@ -33,6 +37,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Set student session
+        await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
         req.session.isStudent = true;
         req.session.studentId = student.id;
         req.session.studentName = `${student.first_name} ${student.last_name}`;

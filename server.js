@@ -15,6 +15,7 @@ const smsService = require('./utils/smsService');
 const logger = require('./utils/logger');
 const cors = require('cors');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const applicationRoutes = require('./routes/applicationRoutes');
 const voucherRoutes = require('./routes/voucherRoutes');
@@ -25,6 +26,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const studentPortalRoutes = require('./routes/studentPortalRoutes');
 
 const app = express();
+app.disable('x-powered-by');
 
 // Trust reverse proxy (Apache/NGINX/Passenger) for correct IP and secure cookies
 app.set('trust proxy', 1);
@@ -59,12 +61,17 @@ const corsOptions = {
         'https://www.nsacoe.edu.gh',
         'https://app.nsacoe.edu.gh',
         process.env.FRONTEND_URL,
-      ].filter(Boolean);
+      ].filter(Boolean).map((value) => {
+        try { return new URL(value).origin; } catch { return null; }
+      }).filter(Boolean);
 
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        logger.warn(`CORS rejected origin: ${JSON.stringify(origin)}`);
+        const error = new Error('Not allowed by CORS');
+        error.status = 403;
+        callback(error);
       }
     } else {
       // In development, allow all origins
@@ -72,8 +79,8 @@ const corsOptions = {
     }
   },
   credentials: true, // Allow cookies to be sent
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key'],
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
@@ -224,13 +231,7 @@ const limiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) =>
-    req.headers['cf-connecting-ip'] ||
-    req.headers['x-real-ip'] ||
-    (req.headers['x-forwarded-for']
-      ? req.headers['x-forwarded-for'].split(',')[0].trim()
-      : null) ||
-    req.ip,
+  keyGenerator: (req) => req.ip,
 });
 
 app.use(
@@ -294,6 +295,22 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Middleware
 app.use(limiter);
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please try again later.' },
+});
+app.use([
+  '/api/admin/login', '/api/auth/voucher-login', '/student/login',
+  '/api/vendor/login', '/api/vouchers/details',
+], loginLimiter);
+app.use(['/api', '/student'], (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 // Serve static assets from the public directory at the web root.
 // This makes files available as /css/..., /js/..., /images/...
 app.use(express.static(path.join(__dirname, 'public')));
@@ -333,6 +350,12 @@ const upload = multer({
 // Update the route to handle file uploads
 app.post(
   '/api/applications',
+  (req, res, next) => {
+    if (!req.session || !req.session.isApplicant || !req.session.voucherId) {
+      return res.status(401).json({ success: false, message: 'Please log in with your voucher.' });
+    }
+    next();
+  },
   upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'idDocument', maxCount: 1 },
@@ -349,12 +372,14 @@ app.post(
 
       // Check if voucher exists and is valid
       const connection = await pool.getConnection();
-      await connection.beginTransaction();
+      let applicantId;
+      let notification;
 
       try {
+        await connection.beginTransaction();
         // Check if voucher exists and is not used
         const [vouchers] = await connection.execute(
-          'SELECT * FROM vouchers WHERE id = ? AND is_used = FALSE',
+          'SELECT * FROM vouchers WHERE id = ? AND is_used = FALSE FOR UPDATE',
           [req.session.voucherId],
         );
 
@@ -468,31 +493,12 @@ app.post(
           ],
         );
 
-        const applicantId = result.insertId;
-
-        // Get voucher serial number
-        const [voucherData] = await connection.query(
-          'SELECT serial_number FROM vouchers WHERE id = ?',
-          [req.session.voucherId],
-        );
-
-        const serialNumber = voucherData[0]?.serial_number;
-
-        // Send SMS notification
-        const fullName = `${firstName} ${middleName || ''} ${lastName}`.trim();
-        const message = smsService.getApplicationReceivedMessage(
-          fullName,
-          serialNumber,
-        );
-        const smsResult = await smsService.sendSMS(phoneNumber, message);
-
-        if (!smsResult.success) {
-          logger.error(
-            'Failed to send application received SMS:',
-            smsResult.error,
-          );
-          // Continue with the response even if SMS fails
-        }
+        applicantId = result.insertId;
+        notification = {
+          phoneNumber,
+          fullName: `${firstName} ${middleName || ''} ${lastName}`.trim(),
+          serialNumber: vouchers[0].serial_number,
+        };
 
         // Insert academic records
         const academicRecords = [];
@@ -661,17 +667,33 @@ app.post(
 
         // Commit the transaction
         await connection.commit();
-        res.json({
-          success: true,
-          applicantId,
-          redirectUrl: `/application-success?ref=${applicantId}`,
-        });
       } catch (error) {
         await connection.rollback();
         throw error;
       } finally {
         connection.release();
       }
+
+      // Keep notification delivery in the request lifecycle, outside the transaction.
+      // A provider failure must not roll back or fail an already saved application.
+      try {
+        const message = smsService.getApplicationReceivedMessage(
+          notification.fullName,
+          notification.serialNumber,
+        );
+        const smsResult = await smsService.sendSMS(notification.phoneNumber, message);
+        if (!smsResult.success) {
+          logger.error('Failed to send application received SMS:', smsResult.error);
+        }
+      } catch (error) {
+        logger.error('Failed to send application received SMS:', error);
+      }
+
+      res.json({
+        success: true,
+        applicantId,
+        redirectUrl: `/application-success?ref=${applicantId}`,
+      });
     } catch (error) {
       logger.error('Error submitting application:', error);
       res.status(500).json({
@@ -925,6 +947,9 @@ app.get('/api/admin/vouchers/statistics', isAdmin, async (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  if (err.status === 403 && err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ success: false, message: 'Origin not allowed' });
+  }
   logger.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
@@ -1044,7 +1069,7 @@ app.all('/api/admin/logout', (req, res) => {
 // Function to generate a serial number
 function generateSerialNumber() {
   const prefix = 'NSCE25';
-  const random = Math.floor(Math.random() * 1000000)
+  const random = crypto.randomInt(0, 1000000)
     .toString()
     .padStart(6, '0');
   return `${prefix}${random}`;
@@ -1052,7 +1077,7 @@ function generateSerialNumber() {
 
 // Function to generate a PIN
 function generatePIN() {
-  return Math.floor(Math.random() * 1000000)
+  return crypto.randomInt(0, 1000000)
     .toString()
     .padStart(6, '0');
 }

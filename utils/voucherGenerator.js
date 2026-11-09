@@ -8,7 +8,7 @@ function generateSerialNumber() {
 
 function generatePin() {
   // Example: 6-digit numeric PIN
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 async function createVoucher(pool) {
