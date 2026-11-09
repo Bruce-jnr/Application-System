@@ -26,9 +26,8 @@ const studentPortalRoutes = require('./routes/studentPortalRoutes');
 
 const app = express();
 
-// Trust reverse proxies (Apache/NGINX/Cloudflare/Passenger) for correct IP and secure cookies.
-// In production this must be true so req.secure reflects X-Forwarded-Proto.
-app.set('trust proxy', process.env.NODE_ENV === 'production' ? true : 1);
+// Trust reverse proxy (Apache/NGINX/Passenger) for correct IP and secure cookies
+app.set('trust proxy', 1);
 
 // Production-specific middleware
 if (process.env.NODE_ENV === 'production') {
@@ -109,24 +108,6 @@ async function testDatabaseConnection() {
   }
 }
 
-async function ensureAppSettings() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS app_settings (
-      \`key\` VARCHAR(100) PRIMARY KEY,
-      \`value\` VARCHAR(255) NOT NULL,
-      updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
-
-  const defaultVoucherPrice = String(process.env.DEFAULT_VOUCHER_PRICE || '360.00');
-  await pool.query(
-    `INSERT INTO app_settings (\`key\`, \`value\`)
-     VALUES ('voucher_price', ?)
-     ON DUPLICATE KEY UPDATE \`value\` = \`value\``,
-    [defaultVoucherPrice]
-  );
-}
-
 // Session store
 const sessionStore = new MySQLStore(
   {
@@ -141,7 +122,7 @@ const sessionStore = new MySQLStore(
       },
     },
   },
-  pool
+  pool,
 );
 
 // Make pool available to routes
@@ -200,54 +181,32 @@ async function initDb() {
 }
 
 // Session middleware
-const sessionCookieSecureRaw = (process.env.SESSION_SECURE || '').toLowerCase();
-const sessionCookieSecure =
-  sessionCookieSecureRaw === 'auto'
-    ? 'auto'
-    : sessionCookieSecureRaw === 'true'
-      ? true
-      : sessionCookieSecureRaw === 'false'
-        ? false
-        : process.env.NODE_ENV === 'production'
-          ? 'auto'
-          : false;
-
-const sessionCookieSameSiteRaw = (process.env.SESSION_SAMESITE || '').toLowerCase();
-const sessionCookieSameSite =
-  sessionCookieSameSiteRaw === 'none' ||
-  sessionCookieSameSiteRaw === 'lax' ||
-  sessionCookieSameSiteRaw === 'strict'
-    ? sessionCookieSameSiteRaw
-    : process.env.NODE_ENV === 'production'
-      ? 'lax'
-      : 'lax';
-
 app.use(
   session({
-    // express-session uses `name`, not `key`
-    name: process.env.SESSION_COOKIE_NAME || 'nsacoe_admin_session',
+    key: process.env.SESSION_COOKIE_NAME || 'nsacoe_admin_session',
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     rolling: (process.env.SESSION_ROLLING || 'true').toLowerCase() === 'true',
-    proxy: process.env.NODE_ENV === 'production',
     cookie: {
       maxAge: Number(process.env.SESSION_MAX_AGE_MS || 86400000), // 24 hours
-      // 'auto' is safest behind reverse proxies (uses req.secure / X-Forwarded-Proto)
-      secure: sessionCookieSecure,
+      secure: process.env.NODE_ENV === 'production', // true for production HTTPS, false for development
       httpOnly: true,
-      sameSite: sessionCookieSameSite, // 'none' for cross-site in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in production
       domain:
         process.env.SESSION_COOKIE_DOMAIN ||
         (process.env.NODE_ENV === 'production' ? '.nsacoe.edu.gh' : undefined),
     },
-  })
+  }),
 );
 
 // Add session debugging middleware (admin/api routes only)
 app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'development' && process.env.DEBUG_LOGS === 'true') {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.DEBUG_LOGS === 'true'
+  ) {
     if (req.path.startsWith('/api/admin') || req.path.startsWith('/admin')) {
       logger.debug('Session data:', {
         id: req.session.id,
@@ -328,7 +287,7 @@ app.use(
     },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-  })
+  }),
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -360,9 +319,9 @@ const upload = multer({
     } else {
       cb(
         new Error(
-          'Invalid file type. Only JPEG, PNG, PDF and DOC files are allowed.'
+          'Invalid file type. Only JPEG, PNG, PDF and DOC files are allowed.',
         ),
-        false
+        false,
       );
     }
   },
@@ -385,7 +344,7 @@ app.post(
       logger.debug('Request body:', req.body);
       logger.debug(
         'Uploaded files:',
-        req.files ? Object.keys(req.files) : 'None'
+        req.files ? Object.keys(req.files) : 'None',
       );
 
       // Check if voucher exists and is valid
@@ -396,7 +355,7 @@ app.post(
         // Check if voucher exists and is not used
         const [vouchers] = await connection.execute(
           'SELECT * FROM vouchers WHERE id = ? AND is_used = FALSE',
-          [req.session.voucherId]
+          [req.session.voucherId],
         );
 
         if (vouchers.length === 0) {
@@ -408,20 +367,7 @@ app.post(
           });
         }
 
-        // Function to deeply convert string values to uppercase
-        const deepUpperCase = (val) => {
-          if (typeof val === 'string') return val.toUpperCase();
-          if (Array.isArray(val)) return val.map(deepUpperCase);
-          if (val && typeof val === 'object') {
-            const newObj = {};
-            for (const key in val) newObj[key] = deepUpperCase(val[key]);
-            return newObj;
-          }
-          return val;
-        };
-        
-        // Extract form data with proper field mapping after converting all to uppercase
-        const upperBody = deepUpperCase(req.body);
+        // Extract form data with proper field mapping
         const {
           title,
           firstName,
@@ -446,7 +392,6 @@ app.post(
           idType,
           idNumber,
           howHeard,
-          refereeName,
           questions,
           agreeTerms,
           agreePolicy,
@@ -474,7 +419,7 @@ app.post(
           emergencyRelation,
           // Languages
           languages,
-        } = upperBody;
+        } = req.body;
 
         // Handle phone array - extract first phone number
         const phoneNumber = Array.isArray(phone)
@@ -489,8 +434,8 @@ app.post(
           (voucher_id, title, first_name, middle_name, last_name, date_of_birth, gender, place_of_birth, birth_region, nationality, 
           residence_address, address, city, residence_region, residence_district, country, 
           gps_code, phone_number, phone_number2, email, religion, disability_status, id_type, id_number, 
-          how_heard, referee_name, questions, agreed_to_terms, agreed_to_policy)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          how_heard, questions, agreed_to_terms, agreed_to_policy)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             req.session.voucherId,
             title || null,
@@ -517,11 +462,10 @@ app.post(
             idType || null,
             idNumber || null,
             howHeard || null,
-            refereeName || null,
             questions || null,
             agreeTerms ? 1 : 0,
             agreePolicy ? 1 : 0,
-          ]
+          ],
         );
 
         const applicantId = result.insertId;
@@ -529,7 +473,7 @@ app.post(
         // Get voucher serial number
         const [voucherData] = await connection.query(
           'SELECT serial_number FROM vouchers WHERE id = ?',
-          [req.session.voucherId]
+          [req.session.voucherId],
         );
 
         const serialNumber = voucherData[0]?.serial_number;
@@ -538,14 +482,14 @@ app.post(
         const fullName = `${firstName} ${middleName || ''} ${lastName}`.trim();
         const message = smsService.getApplicationReceivedMessage(
           fullName,
-          serialNumber
+          serialNumber,
         );
         const smsResult = await smsService.sendSMS(phoneNumber, message);
 
         if (!smsResult.success) {
           logger.error(
             'Failed to send application received SMS:',
-            smsResult.error
+            smsResult.error,
           );
           // Continue with the response even if SMS fails
         }
@@ -584,7 +528,7 @@ app.post(
             `INSERT INTO academic_records 
             (applicant_id, subject_type, subject_name, index_number, grade) 
             VALUES ?`,
-            [academicRecords]
+            [academicRecords],
           );
         }
 
@@ -622,7 +566,7 @@ app.post(
             `INSERT INTO parents_guardians 
             (applicant_id, relation, full_name, occupation, phone_number, email, is_primary) 
             VALUES ?`,
-            [parents]
+            [parents],
           );
         }
 
@@ -637,7 +581,7 @@ app.post(
               emergencyContact,
               emergencyPhone,
               emergencyRelation || 'Other',
-            ]
+            ],
           );
         }
 
@@ -651,7 +595,7 @@ app.post(
             `INSERT INTO applicant_languages 
             (applicant_id, language_name) 
             VALUES ?`,
-            [languageRecords]
+            [languageRecords],
           );
         }
 
@@ -705,29 +649,22 @@ app.post(
             `INSERT INTO application_documents 
             (applicant_id, document_type, file_name, file_type, file_data) 
             VALUES ?`,
-            [documents]
+            [documents],
           );
         }
 
         // Mark the voucher as used
         await connection.execute(
           'UPDATE vouchers SET is_used = TRUE, used_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [req.session.voucherId]
+          [req.session.voucherId],
         );
 
         // Commit the transaction
         await connection.commit();
-        
-        // Expire the session after successful submission
-        req.session.destroy((err) => {
-          if (err) {
-            logger.error('Error destroying session after submission:', err);
-          }
-          res.json({
-            success: true,
-            applicantId,
-            redirectUrl: `/application-success?ref=${applicantId}`,
-          });
+        res.json({
+          success: true,
+          applicantId,
+          redirectUrl: `/application-success?ref=${applicantId}`,
         });
       } catch (error) {
         await connection.rollback();
@@ -742,7 +679,7 @@ app.post(
         message: error.message || 'Failed to submit application',
       });
     }
-  }
+  },
 );
 
 // Routes
@@ -820,20 +757,34 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  // Admin UI is token-based (JWT) now; do not rely on server sessions here.
-  res.redirect('/admin/vouchers');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Admin route accessed:', {
+      session: req.session,
+      isAdmin: req.session.isAdmin,
+      adminId: req.session.adminId,
+      sessionId: req.session.id,
+    });
+  }
+
+  if (!req.session.isAdmin) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Not admin, redirecting to login');
+    }
+    return res.redirect('/admin-login');
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Admin access granted');
+  }
+  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
 // Add route for admin dashboard
-app.get('/admin/dashboard', (req, res) => {
+app.get('/admin/dashboard', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
 });
 
-app.get('/admin/settings', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'admin-settings.html'));
-});
-
-app.get('/admin/vouchers', (req, res) => {
+app.get('/admin/vouchers', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
@@ -846,7 +797,8 @@ app.use('/student', studentPortalRoutes);
 
 // Student Admission Letter route
 app.get('/student/admission-letter', (req, res) => {
-  if (!req.session || !req.session.isStudent) return res.redirect('/student/login');
+  if (!req.session || !req.session.isStudent)
+    return res.redirect('/student/login');
   res.sendFile(path.join(__dirname, 'views', 'student-admission-letter.html'));
 });
 
@@ -854,7 +806,6 @@ app.get('/student/admission-letter', (req, res) => {
 app.post('/student/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/student/login'));
 });
-
 
 app.get('/apply-now', (req, res, next) => {
   // Check if user has a valid voucher session
@@ -871,7 +822,6 @@ app.get('/apply-now-login', (req, res) => {
 });
 
 // Add routes for remaining pages
-
 
 // Add route for application success page (handle both with and without .html extension)
 app.get(['/application-success', '/application-success.html'], (req, res) => {
@@ -898,7 +848,7 @@ app.get('/api/vouchers/details', async (req, res) => {
     // Query the database for voucher details
     const [vouchers] = await pool.query(
       'SELECT * FROM vouchers WHERE serial_number = ?',
-      [serial]
+      [serial],
     );
 
     if (vouchers.length === 0) {
@@ -973,18 +923,6 @@ app.get('/api/admin/vouchers/statistics', isAdmin, async (req, res) => {
   }
 });
 
-// Health endpoint for liveness checks
-app.get('/health', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    await connection.ping();
-    connection.release();
-    res.json({ status: 'ok' });
-  } catch (e) {
-    res.status(500).json({ status: 'error', error: e.message });
-  }
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   logger.error(err.stack);
@@ -997,12 +935,23 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
 });
 
+// Health endpoint for liveness checks
+app.get('/health', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(500).json({ status: 'error', error: e.message });
+  }
+});
+
 // Initialize database before starting the server
 async function startServer() {
   try {
     // Test database connection first
     await testDatabaseConnection();
-    await ensureAppSettings();
 
     // Check if we should force reinitialize the database
     const forceInit = process.env.FORCE_DB_INIT === 'true';
@@ -1013,7 +962,7 @@ async function startServer() {
       logger.info('Database initialized successfully');
     } else {
       logger.info(
-        'Skipping database initialization. Set FORCE_DB_INIT=true to force initialization.'
+        'Skipping database initialization. Set FORCE_DB_INIT=true to force initialization.',
       );
     }
 
@@ -1045,7 +994,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Check if the user exists in the database
     const [users] = await pool.execute(
       'SELECT * FROM applicants WHERE email = ?',
-      [email]
+      [email],
     );
 
     if (users.length === 0) {
@@ -1074,6 +1023,22 @@ app.post('/api/auth/login', async (req, res) => {
       message: err.message || 'Server error during login',
     });
   }
+});
+
+// Add admin logout route
+app.all('/api/admin/logout', (req, res) => {
+  req.session.isAdmin = false;
+  req.session.destroy((err) => {
+    if (err) {
+      logger.error('Logout error:', err);
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    if (req.xhr || req.headers.accept.includes('application/json')) {
+      res.json({ success: true });
+    } else {
+      res.redirect('/admin-login');
+    }
+  });
 });
 
 // Function to generate a serial number
@@ -1127,7 +1092,7 @@ app.post('/api/vendor/login', async (req, res) => {
 
     const [users] = await pool.query(
       'SELECT * FROM users WHERE username = ? AND user_type = "vendor"',
-      [username]
+      [username],
     );
 
     logger.debug('Database query result:', {
