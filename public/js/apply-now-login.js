@@ -5,9 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // Check if already logged in
   async function checkLoginStatus() {
     try {
-  const response = await fetch('/api/auth/check-applicant', { credentials: 'include' });
+      const response = await fetch('/api/auth/check-applicant', {
+        credentials: 'include',
+      });
       const data = await response.json();
-      
+
       if (data.success) {
         window.location.href = '/apply-now';
       }
@@ -53,17 +55,19 @@ document.addEventListener('DOMContentLoaded', function () {
           // Store voucher info in session storage
           sessionStorage.setItem('voucherId', data.voucher.id);
           sessionStorage.setItem('serialNumber', data.voucher.serial_number);
-          
+
           // Redirect to the application page
           window.location.href = '/apply-now';
         } else {
           // Display error message
-          errorMessage.textContent = data.message || 'Login failed. Please try again.';
+          errorMessage.textContent =
+            data.message || 'Login failed. Please try again.';
           errorMessage.style.display = 'block';
         }
       } catch (error) {
         console.error('Login error:', error);
-        errorMessage.textContent = 'An error occurred during login. Please try again.';
+        errorMessage.textContent =
+          'An error occurred during login. Please try again.';
         errorMessage.style.display = 'block';
       }
     });
