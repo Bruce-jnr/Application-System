@@ -61,9 +61,16 @@ const corsOptions = {
         'https://www.nsacoe.edu.gh',
         'https://app.nsacoe.edu.gh',
         process.env.FRONTEND_URL,
-      ].filter(Boolean).map((value) => {
-        try { return new URL(value).origin; } catch { return null; }
-      }).filter(Boolean);
+      ]
+        .filter(Boolean)
+        .map((value) => {
+          try {
+            return new URL(value).origin;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -80,7 +87,12 @@ const corsOptions = {
   },
   credentials: true, // Allow cookies to be sent
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-API-Key',
+  ],
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
@@ -301,12 +313,21 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many login attempts. Please try again later.' },
+  message: {
+    success: false,
+    message: 'Too many login attempts. Please try again later.',
+  },
 });
-app.use([
-  '/api/admin/login', '/api/auth/voucher-login', '/student/login',
-  '/api/vendor/login', '/api/vouchers/details',
-], loginLimiter);
+app.use(
+  [
+    '/api/admin/login',
+    '/api/auth/voucher-login',
+    '/student/login',
+    '/api/vendor/login',
+    '/api/vouchers/details',
+  ],
+  loginLimiter,
+);
 app.use(['/api', '/student'], (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
@@ -352,7 +373,9 @@ app.post(
   '/api/applications',
   (req, res, next) => {
     if (!req.session || !req.session.isApplicant || !req.session.voucherId) {
-      return res.status(401).json({ success: false, message: 'Please log in with your voucher.' });
+      return res
+        .status(401)
+        .json({ success: false, message: 'Please log in with your voucher.' });
     }
     next();
   },
@@ -681,9 +704,15 @@ app.post(
           notification.fullName,
           notification.serialNumber,
         );
-        const smsResult = await smsService.sendSMS(notification.phoneNumber, message);
+        const smsResult = await smsService.sendSMS(
+          notification.phoneNumber,
+          message,
+        );
         if (!smsResult.success) {
-          logger.error('Failed to send application received SMS:', smsResult.error);
+          logger.error(
+            'Failed to send application received SMS:',
+            smsResult.error,
+          );
         }
       } catch (error) {
         logger.error('Failed to send application received SMS:', error);
@@ -948,7 +977,9 @@ app.get('/api/admin/vouchers/statistics', isAdmin, async (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   if (err.status === 403 && err.message === 'Not allowed by CORS') {
-    return res.status(403).json({ success: false, message: 'Origin not allowed' });
+    return res
+      .status(403)
+      .json({ success: false, message: 'Origin not allowed' });
   }
   logger.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
@@ -1069,17 +1100,13 @@ app.all('/api/admin/logout', (req, res) => {
 // Function to generate a serial number
 function generateSerialNumber() {
   const prefix = 'NSCE25';
-  const random = crypto.randomInt(0, 1000000)
-    .toString()
-    .padStart(6, '0');
+  const random = crypto.randomInt(0, 1000000).toString().padStart(6, '0');
   return `${prefix}${random}`;
 }
 
 // Function to generate a PIN
 function generatePIN() {
-  return crypto.randomInt(0, 1000000)
-    .toString()
-    .padStart(6, '0');
+  return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 }
 
 // Admin login route
